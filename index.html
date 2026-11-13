@@ -75,14 +75,15 @@ header p{margin:4px 0 0;color:var(--mute);font-size:15px}
 .shelves button.txt{font-size:14px}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.board{margin-top:8px;background:var(--card);border-radius:26px;padding:16px 10px 10px;box-shadow:var(--shadow);touch-action:pan-y;position:relative}
-.board.drag{overflow:hidden}
+.board{margin-top:8px;background:var(--card);border-radius:26px;box-shadow:var(--shadow);touch-action:pan-y;position:relative;overflow:hidden;isolation:isolate;height:140px;transition:height .32s cubic-bezier(.22,1,.36,1);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.board.still{transition:none}
+.pane{position:absolute;left:0;top:0;width:100%;padding:16px 10px 10px;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;contain:layout style}
+.board.drag .plate{transition:none}
+.board.drag .plate:active{transform:none}
 .board h2{margin:0 4px 12px 8px;font-size:22px;font-weight:700;letter-spacing:-.015em;display:flex;justify-content:space-between;align-items:center;min-height:36px}
 .board h2 .meta{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--mute);letter-spacing:0}
 .more{flex:none;border:0;background:var(--panel);width:36px;height:36px;border-radius:50%;cursor:pointer;padding:0;display:grid;place-items:center;color:var(--ink)}
 .more svg{display:block}
-#pane,.ghost{will-change:transform}
-.ghost{position:absolute;left:10px;right:10px;top:16px;pointer-events:none}
 .rows{display:flex;flex-direction:column;gap:8px}
 .rows.slide{animation:in .25s cubic-bezier(.22,1,.36,1)}
 @keyframes in{from{opacity:0;transform:translate3d(var(--from,0),0,0);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
@@ -228,11 +229,8 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 
 <nav class="shelves" id="shelves" aria-label="Prateleiras"></nav>
 
-<section class="board" id="board">
-  <div id="pane">
-    <h2><span id="bTitle"></span><span class="meta"><span id="bCount"></span><button type="button" class="more" id="bMore" aria-label="Opções desta prateleira"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></span></h2>
-    <div id="rows" class="rows"></div>
-  </div>
+<section class="board still" id="board">
+  <div class="pane"></div><div class="pane"></div><div class="pane"></div>
 </section>
 
 <footer>
@@ -475,22 +473,30 @@ function paneData(s){
   return { t: 'Prateleira ' + s, c: plural(items.length), h: html };
 }
 var slideFrom = 0;
+var DOTS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+function fillPane(el, s){
+  el._stale = false;
+  if (s === null || s === undefined){ el.innerHTML = ''; return; }
+  var p = paneData(s);
+  el.innerHTML = '<h2><span class="bt">' + p.t + '</span><span class="meta"><span class="bc">' + p.c + '</span>' + (s ? '<button type="button" class="more" aria-label="Opções desta prateleira">' + DOTS + '</button>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
+}
 function renderBoard(){
-  var rows = $('rows');
-  rows.classList.remove('slide');
+  var C = PN[1];
   if (CLOUD && (!ready || !D.length)){
-    $('bTitle').textContent = 'Prateleira ' + (current || 1); $('bCount').textContent = ''; $('bMore').hidden = true;
-    rows.innerHTML = !ready ? '<p class="hint">Carregando a lista…</p>'
+    C._stale = false;
+    C.innerHTML = '<h2><span class="bt">Prateleira ' + (current || 1) + '</span><span class="meta"><span class="bc"></span></span></h2><div class="rows">' + (!ready ? '<p class="hint">Carregando a lista…</p>'
       : fromCache ? '<p class="hint">Conecte à internet para baixar a lista pela primeira vez.</p>'
-      : '<p class="hint">A lista está vazia. Importe o arquivo dados-iniciais.json para começar.</p><label class="import">Importar lista inicial<input type="file" id="seed" accept=".json,application/json"></label>';
-    var sd = $('seed'); if (sd) sd.addEventListener('change', importSeed);
-    return;
+      : '<p class="hint">A lista está vazia. Importe o arquivo dados-iniciais.json para começar.</p><label class="import">Importar lista inicial<input type="file" id="seed" accept=".json,application/json"></label>') + '</div>';
+    PN[0].innerHTML = PN[2].innerHTML = ''; PN[0]._stale = PN[2]._stale = false;
+    setIds(); var sd = $('seed'); if (sd) sd.addEventListener('change', importSeed);
+    fit(); return;
   }
-  var p = paneData(current);
-  $('bTitle').textContent = p.t; $('bCount').textContent = p.c; $('bMore').hidden = !current;
-  rows.innerHTML = p.h;
+  fillPane(C, current); setIds();
+  var rows = $('rows');
   if (slideFrom){ rows.style.setProperty('--from', slideFrom + 'px'); void rows.offsetWidth; rows.classList.add('slide'); slideFrom = 0; }
   mark();
+  PN[0]._stale = PN[2]._stale = true; scheduleNb();
+  fit();
 }
 
 function matches(m){
@@ -498,9 +504,10 @@ function matches(m){
   if (/^\d+$/.test(query)) return m.n.some(function(x){ return String(x).indexOf(query) === 0; });
   return m.k.indexOf(query) !== -1;
 }
-function mark(){
-  $('rows').classList.toggle('dim', !!query || !!selected);
-  Array.prototype.forEach.call($('rows').querySelectorAll('.plate'), function(el){
+function mark(r){
+  r = r || $('rows'); if (!r) return;
+  r.classList.toggle('dim', !!query || !!selected);
+  Array.prototype.forEach.call(r.querySelectorAll('.plate'), function(el){
     var m = D[+el.dataset.i];
     el.classList.toggle('match', matches(m));
     el.classList.toggle('sel', selected === m);
@@ -519,20 +526,28 @@ function search(){
   if (!found.length){ note.textContent = 'Nenhuma máscara encontrada para "' + $('q').value.trim() + '".'; mark(); return; }
   hits.innerHTML = found.slice(0, 8).map(hitHtml).join('');
   if (found.length > 8) note.textContent = 'Mostrando 8 de ' + found.length + '. Continue digitando para refinar.';
-  if (found.length === 1 && found[0].s !== current){ current = found[0].s; renderShelves(); renderBoard(); }
+  if (found.length === 1 && found[0].s !== current){ finishAnim(); current = found[0].s; renderShelves(); renderBoard(); }
   else mark();
 }
 
 function order(){ return SH.concat([LOOSE]); }
 function show(s, quiet){
-  var o = order();
-  if (!quiet && s !== current) slideFrom = o.indexOf(s) > o.indexOf(current) ? 8 : -8;
+  finishAnim();
+  var o = order(), di = o.indexOf(s) - o.indexOf(current);
+  /* prateleira vizinha: desliza o carrossel inteiro, do mesmo jeito que o dedo faria */
+  if (!quiet && (di === 1 || di === -1) && !REDUCE && !(CLOUD && (!ready || !D.length))){
+    closeSheets(); fillNeighbors(); peek = PN[1 + di]; fit(); setChip(s);
+    var a = anim = { dir: di, raf: 0 };
+    run(a, -di * U, 0, 1, .4, function(){ rotate(di); peek = null; fit(); });
+    return;
+  }
+  if (!quiet && s !== current) slideFrom = di > 0 ? 8 : -8;
   current = s; closeSheets();
   try { localStorage.setItem('prateleira', s); } catch (e) {}
   renderShelves(); renderBoard();
 }
 function open(m){
-  if (m.s !== current){ current = m.s; renderShelves(); renderBoard(); }
+  if (m.s !== current){ finishAnim(); current = m.s; renderShelves(); renderBoard(); }
   selected = m;
   $('sNum').textContent = label(m);
   $('sNum').className = 'big' + (m.n.length ? '' : ' sn');
@@ -557,7 +572,7 @@ function closeSheets(){
 
 document.addEventListener('click', function(e){
   var t = e.target.closest ? e.target.closest('[data-i],[data-close]') : null;
-  if (!t || swiped) return;
+  if (!t || performance.now() - swipeT < 350) return;
   if (t.hasAttribute('data-close')){ closeSheets(); return; }
   if (t.classList.contains('hit')) $('q').blur();
   open(D[+t.dataset.i]);
@@ -572,83 +587,148 @@ q.addEventListener('input', function(){
 $('clear').addEventListener('click', function(){ q.value = ''; query = ''; field.classList.remove('has'); search(); q.focus(); });
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSheets(); });
 
-/* deslizar para os lados: o quadro acompanha o dedo; ao soltar, uma mola leva até o fim com a velocidade do dedo */
-var board = $('board'), pane = $('pane'), drag = null, anim = false, swiped = false;
+/* ---- carrossel de prateleiras ----
+   Três painéis prontos (anterior, atual, próxima), cada um na sua camada de GPU.
+   O dedo só muda transform; nada é montado nem medido durante o gesto.
+   Ao soltar, uma mola (resposta .42 s, amortecimento .86 ao trocar; 1.0 ao voltar) continua com a
+   velocidade do dedo. A troca projeta onde o dedo pararia (desaceleração 0.998, como o iOS).
+   Qualquer toque durante a mola agarra o carrossel onde ele está. */
+var board = $('board'), PN = Array.prototype.slice.call(board.querySelectorAll('.pane'));
+var GAP = 16, U = 0, X = 0, drag = null, anim = null, peek = null, swipeT = -1e9, rafId = 0, lastH = -1, nbT = 0;
 function tx(el, x){ el.style.transform = 'translate3d(' + x + 'px,0,0)'; }
-function gap(){ return board.clientWidth + 14; }
-function rubber(o, dim){ var c = .55; return (o * dim * c) / (dim + c * Math.abs(o)); }
-function spring(from, to, v, step, done){
-  if (REDUCE){ step(to); done(); return; }
-  var w = 2 * Math.PI / .3, A = from - to, B = v + w * A, t0 = 0;
-  function f(now){
-    if (!t0) t0 = now;
-    var t = (now - t0) / 1000, x = to + (A + B * t) * Math.exp(-w * t);
-    if ((t > .12 && Math.abs(x - to) < .5) || t > 1){ step(to); done(); return; }
-    step(x); requestAnimationFrame(f);
-  }
-  requestAnimationFrame(f);
+function measure(){ U = board.clientWidth + GAP; }
+function place(){ for (var k = 0; k < 3; k++) PN[k].style.transform = 'translate3d(' + ((k - 1) * U + X) + 'px,0,0)'; }
+function frame(){ rafId = 0; place(); }
+function nb(d){ var o = order(), v = o[o.indexOf(current) + d]; return v === undefined ? null : v; }
+function setIds(){
+  ['bTitle', 'bCount', 'bMore', 'rows'].forEach(function(id){ var el = document.getElementById(id); if (el) el.removeAttribute('id'); });
+  var C = PN[1], a;
+  a = C.querySelector('.bt'); if (a) a.id = 'bTitle';
+  a = C.querySelector('.bc'); if (a) a.id = 'bCount';
+  a = C.querySelector('.more'); if (a) a.id = 'bMore';
+  a = C.querySelector('.rows'); if (a) a.id = 'rows';
+  PN.forEach(function(el, k){ if (k === 1){ el.removeAttribute('aria-hidden'); el.inert = false; } else { el.setAttribute('aria-hidden', 'true'); el.inert = true; } });
 }
-function setGhost(dir){
-  if (drag.ghost) board.removeChild(drag.ghost);
-  drag.ghost = null; drag.dir = dir;
-  var o = order(), to = o[o.indexOf(current) + dir];
-  drag.to = to === undefined ? null : to;
-  if (drag.to === null) return;
-  var p = paneData(drag.to), g = document.createElement('div');
-  g.className = 'ghost'; g.setAttribute('aria-hidden', 'true');
-  g.innerHTML = '<h2><span>' + p.t + '</span><span class="meta"><span>' + p.c + '</span>' + (drag.to ? '<span class="more">' + $('bMore').innerHTML + '</span>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
-  board.appendChild(g); drag.ghost = g;
+function fit(){
+  var h = PN[1].offsetHeight;
+  if (peek && peek.firstChild) h = Math.max(h, peek.offsetHeight);
+  if (h && h !== lastH){ lastH = h; board.style.height = h + 'px'; }
+}
+function fillNeighbors(){
+  if (nbT){ clearTimeout(nbT); nbT = 0; }
+  for (var k = 0; k < 3; k += 2){
+    var el = PN[k];
+    if (el._stale){ fillPane(el, nb(k - 1)); var r = el.querySelector('.rows'); if (r) mark(r); }
+  }
+}
+function scheduleNb(){ if (!nbT) nbT = setTimeout(fillNeighbors, 90); }
+function setChip(s){
+  var nav = $('shelves');
+  Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ b.setAttribute('aria-pressed', +b.dataset.s === s ? 'true' : 'false'); });
+  movePill(true);
+  var act = nav.querySelector('[aria-pressed="true"]');
+  if (act && nav.scrollTo) nav.scrollTo({ left: Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2), behavior: 'smooth' });
+}
+/* troca de papéis sem redesenhar: o painel que saiu de vista vira o novo vizinho do outro lado */
+function rotate(dir){
+  var to = nb(dir); if (to === null) return;
+  var el;
+  if (dir > 0){ el = PN.shift(); PN.push(el); } else { el = PN.pop(); PN.unshift(el); }
+  el.innerHTML = ''; el._stale = true;
+  X += dir * U;
+  current = to;
+  try { localStorage.setItem('prateleira', to); } catch (e) {}
+  setIds(); place(); closeSheets(); renderShelves();
+  scheduleNb();
+}
+/* mola amortecida, resolvida em forma fechada a cada quadro */
+function run(a, target, v, z, resp, done){
+  if (REDUCE){ X = target; place(); anim = null; done(); return; }
+  var x0 = X - target, wn = 2 * Math.PI / resp, wd = z < 1 ? wn * Math.sqrt(1 - z * z) : 0, t0 = performance.now() - 8;
+  function f(now){
+    if (anim !== a) return;
+    var t = Math.max(0, (now - t0) / 1000), e = Math.exp(-z * wn * t), x, vx;
+    if (z < 1){ var c = Math.cos(wd * t), sn = Math.sin(wd * t), B = (v + z * wn * x0) / wd; x = e * (x0 * c + B * sn); vx = e * ((B * wd - z * wn * x0) * c - (x0 * wd + z * wn * B) * sn); }
+    else { var K = v + wn * x0; x = (x0 + K * t) * e; vx = e * (v - wn * K * t); }
+    if ((t > .05 && Math.abs(x) < .35 && Math.abs(vx) < 12) || t > 1.6){ X = target; place(); anim = null; done(); return; }
+    X = target + x; a.v = vx; place();
+    a.raf = requestAnimationFrame(f);
+  }
+  a.raf = requestAnimationFrame(f);
+}
+function finishAnim(){
+  if (drag){ drag = null; board.classList.remove('drag'); }
+  if (!anim) return;
+  var a = anim; anim = null; cancelAnimationFrame(a.raf);
+  if (a.dir) rotate(a.dir);
+  X = 0; place(); peek = null; fit();
+}
+function rubber(o, dim){ var c = .55; return (o * dim * c) / (dim + c * Math.abs(o)); }
+function settle(v, cancel){
+  if (!X && !v){ peek = null; fit(); return; }
+  var proj = X + v * .499, dir = proj < 0 ? 1 : -1, to = nb(dir);
+  var go = !cancel && to !== null && (Math.abs(proj) > U * .5 || (Math.abs(v) > 350 && (v < 0) === (dir > 0)));
+  if (to === null) v *= .3;
+  peek = go ? PN[1 + dir] : peek;
+  setChip(go ? to : current);
+  var a = anim = { dir: go ? dir : 0, raf: 0, v: v };
+  run(a, go ? -dir * U : 0, v, go ? .86 : 1, go ? .42 : .34, function(){ if (go) rotate(dir); peek = null; fit(); });
 }
 board.addEventListener('touchstart', function(e){
   drag = null;
-  if (e.touches.length !== 1 || anim || (CLOUD && (!ready || !D.length))) return;
+  if (e.touches.length !== 1 || (CLOUD && (!ready || !D.length))) return;
+  var caught = false, cv = 0;
+  if (anim){
+    var a = anim; anim = null; cancelAnimationFrame(a.raf); caught = true; cv = a.v || 0;
+    if (a.dir && Math.abs(X) > U / 2 && (X < 0) === (a.dir > 0)) rotate(a.dir);
+  }
+  fillNeighbors();
   var t = e.touches[0];
-  drag = { x: t.clientX, y: t.clientY, dx: 0, raw: 0, hist: [], lock: false, ghost: null, to: null, dir: 0 };
+  drag = { x: t.clientX, y: t.clientY, base: X, hist: [[e.timeStamp, t.clientX]], lock: false, caught: caught, cv: cv };
 }, { passive: true });
 board.addEventListener('touchmove', function(e){
   if (!drag) return;
   var t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y;
   if (!drag.lock){
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-    if (Math.abs(dy) >= Math.abs(dx)){ drag = null; return; }
-    drag.lock = true; drag.x = t.clientX; dx = 0;
+    if (!drag.caught && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    if (!drag.caught && Math.abs(dy) >= Math.abs(dx)){ drag = null; return; }
+    drag.lock = true;
     board.classList.add('drag');
   }
-  var dir = dx < 0 ? 1 : -1;
-  if (dx && dir !== drag.dir) setGhost(dir);
-  drag.hist.push([e.timeStamp, t.clientX]);
-  while (drag.hist.length > 2 && e.timeStamp - drag.hist[0][0] > 100) drag.hist.shift();
-  drag.raw = dx; drag.dx = drag.to === null ? rubber(dx, board.clientWidth) : dx;
-  tx(pane, drag.dx);
-  if (drag.ghost) tx(drag.ghost, drag.dx + drag.dir * gap());
-}, { passive: true });
+  if (e.cancelable) e.preventDefault();
+  var raw = drag.base + dx, dir = raw < 0 ? 1 : -1, to = raw ? nb(dir) : null;
+  if (to === null) X = rubber(raw, U);
+  else if (Math.abs(raw) > U) X = (raw < 0 ? -1 : 1) * (U + rubber(Math.abs(raw) - U, U));
+  else X = raw;
+  var pk = raw && to !== null ? PN[1 + dir] : null;
+  if (pk && pk !== peek){ peek = pk; fit(); }
+  var h = drag.hist; h.push([e.timeStamp, t.clientX]);
+  while (h.length > 2 && e.timeStamp - h[0][0] > 100) h.shift();
+  if (!rafId) rafId = requestAnimationFrame(frame);
+}, { passive: false });
 function endDrag(e, cancel){
   var d = drag; drag = null;
-  if (!d || !d.lock) return;
-  swiped = true; anim = true;
-  var w = gap(), h = d.hist, n = h.length, v = 0;
+  if (!d) return;
+  board.classList.remove('drag');
+  if (!d.lock){ if (d.caught) settle(d.cv, false); return; }
+  swipeT = performance.now();
+  if (rafId){ cancelAnimationFrame(rafId); rafId = 0; place(); }
+  var h = d.hist, n = h.length, v = 0;
   if (n > 1 && e.timeStamp - h[n - 1][0] < 80) v = (h[n - 1][1] - h[0][1]) / Math.max(1, h[n - 1][0] - h[0][0]) * 1000;
-  v = Math.max(-1500, Math.min(1500, v));
-  var proj = d.raw + v * .499;
-  var go = !cancel && d.to !== null && Math.abs(proj) > w * .4 && (proj < 0) === (d.dir > 0);
-  if (go && !REDUCE){
-    board.style.height = board.offsetHeight + 'px'; void board.offsetHeight;
-    board.style.transition = 'height .3s cubic-bezier(.22,1,.36,1)';
-    board.style.height = (d.ghost.offsetHeight + 26) + 'px';
-  }
-  spring(d.dx, go ? -d.dir * w : 0, v, function(x){ tx(pane, x); if (d.ghost) tx(d.ghost, x + d.dir * w); }, function(){
-    if (go) show(d.to, true);
-    pane.style.transform = '';
-    if (d.ghost && d.ghost.parentNode) board.removeChild(d.ghost);
-    board.style.transition = ''; board.style.height = ''; board.classList.remove('drag');
-    anim = false; swiped = false;
-  });
+  settle(Math.max(-2500, Math.min(2500, v)), cancel);
 }
 board.addEventListener('touchend', function(e){ endDrag(e, false); }, { passive: true });
 board.addEventListener('touchcancel', function(e){ endDrag(e, true); }, { passive: true });
+board.addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('.more') : null;
+  if (b && PN[1].contains(b) && performance.now() - swipeT > 350) openMenu();
+});
+if (window.ResizeObserver){ var ro = new ResizeObserver(function(){ fit(); }); PN.forEach(function(el){ ro.observe(el); }); }
+window.addEventListener('resize', function(){ measure(); place(); fit(); });
+measure(); place();
 
 /* opções da prateleira: as ações ficam junto do título dela */
-$('bMore').addEventListener('click', function(){
+function openMenu(){
   if (!current) return;
   var n = inShelf(current).length;
   closeSheets();
@@ -656,7 +736,7 @@ $('bMore').addEventListener('click', function(){
   $('mSub').textContent = plural(n);
   $('mDel').hidden = SH.length < 2;
   $('menu').classList.add('open'); $('menu').setAttribute('aria-hidden', 'false');
-});
+}
 $('mAdd').addEventListener('click', function(){ openForm(null); });
 $('mDel').addEventListener('click', function(){
   var s = current, items = inShelf(s), n = items.length;
@@ -912,6 +992,7 @@ $('wn').addEventListener('input', function(){ clearErr($('wErr'), $('wg')); });
 window.addEventListener('online', updateSub); window.addEventListener('offline', updateSub);
 
 renderShelves(); renderBoard(); foot();
+requestAnimationFrame(function(){ requestAnimationFrame(function(){ board.classList.remove('still'); }); });
 if (CLOUD) startCloud();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
