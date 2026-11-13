@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prateleira de Máscaras</title>
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Máscaras">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+/* Layout: título, busca fixa no topo, seletor de prateleira, painel com um andar por faixa (A no alto), folha de detalhes embaixo. */
+:root{
+  --bg:#f5f5f7; --card:#ffffff; --ink:#1d1d1f; --mute:#6e6e73; --line:#d2d2d7;
+  --accent:#0071e3; --panel:#efeeeb; --plate:#fcfcfa; --plate-line:#d3d1cb;
+  --alu1:#d4d7dc; --alu2:#a9adb4; --cup:#e6dfcf; --tube:#4f9de0;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#000; --card:#1c1c1e; --ink:#f5f5f7; --mute:#98989d; --line:#3a3a3c;
+    --accent:#2997ff; --panel:#2a2a2d; --plate:#e9e8e3; --plate-line:#5a5a5f;
+    --alu1:#a3a7ad; --alu2:#73777d; --cup:#cfc8b6; --tube:#3d8ad0;
+    --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000; --card:#1c1c1e; --ink:#f5f5f7; --mute:#98989d; --line:#3a3a3c;
+  --accent:#2997ff; --panel:#2a2a2d; --plate:#e9e8e3; --plate-line:#5a5a5f;
+  --alu1:#a3a7ad; --alu2:#73777d; --cup:#cfc8b6; --tube:#3d8ad0;
+  --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-text-size-adjust:100%}
+body{padding:0 16px 150px;max-width:560px;margin:0 auto}
+button{font:inherit;color:inherit}
+header{padding:26px 2px 8px}
+h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em}
+header p{margin:4px 0 0;color:var(--mute);font-size:15px}
+
+.search{position:sticky;top:0;z-index:5;padding:8px 0 10px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px)}
+.field{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:0 14px;height:50px;box-shadow:0 0 0 1px var(--line) inset}
+.field svg{flex:none;color:var(--mute)}
+.field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;height:100%;-webkit-appearance:none;appearance:none}
+.field input::-webkit-search-cancel-button{display:none}
+.field input::placeholder{color:var(--mute)}
+.field button{border:0;background:var(--line);width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;display:none;padding:0}
+.field.has button{display:block}
+.field:focus-within{box-shadow:0 0 0 2px var(--accent) inset}
+
+.hits{display:flex;flex-direction:column;gap:1px;margin-top:6px;border-radius:16px;overflow:hidden}
+.hits:empty{display:none}
+.hit{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;background:var(--card);border:0;padding:12px 16px;cursor:pointer;text-align:left;width:100%}
+.hit strong{font-size:20px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;min-width:52px}
+.hit .d{font-size:14px;color:var(--mute);text-transform:capitalize;overflow-wrap:anywhere}
+.hit .w{font-size:13px;font-weight:600;background:var(--bg);border-radius:9px;padding:5px 9px;white-space:nowrap}
+.note{margin:10px 4px 0;font-size:14px;color:var(--mute)}
+.note:empty{display:none}
+
+.shelves{display:flex;gap:8px;overflow-x:auto;padding:12px 0 6px;scrollbar-width:none}
+.shelves::-webkit-scrollbar{display:none}
+.shelves button{flex:none;min-width:44px;height:40px;border-radius:20px;border:0;background:var(--card);font-size:16px;font-weight:600;cursor:pointer;padding:0 14px;transition:background .25s,color .25s,transform .2s}
+.shelves button:active{transform:scale(.94)}
+.shelves button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.shelves button.txt{font-size:14px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.board{margin-top:8px;background:var(--card);border-radius:26px;padding:16px 10px 10px;box-shadow:var(--shadow);touch-action:pan-y}
+.board h2{margin:0 8px 12px;font-size:22px;font-weight:700;letter-spacing:-.015em;display:flex;justify-content:space-between;align-items:baseline}
+.board h2 span{font-size:14px;font-weight:500;color:var(--mute);letter-spacing:0}
+#rows{display:flex;flex-direction:column;gap:8px;animation:in .35s ease}
+@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+.andar{display:grid;grid-template-columns:20px 1fr;gap:6px;align-items:center;background:var(--panel);border-radius:18px;padding:14px 8px 10px 8px}
+.andar>b{font-size:20px;font-weight:700;color:var(--mute);text-align:center}
+.row{display:flex;gap:5px;justify-content:center;align-items:flex-end;container-type:inline-size;min-width:0}
+.plate{flex:1 1 0;min-width:0;max-width:86px;border:0;background:none;padding:6px 0 0;position:relative;cursor:pointer;font-size:12px;font-size:min(17px,calc(100cqw / var(--n) * .33));transition:opacity .3s,transform .2s}
+.plate:active{transform:scale(.95)}
+.tube{position:absolute;left:20%;right:20%;top:0;height:12px;border:2px solid var(--tube);border-bottom:0;border-radius:99px 99px 0 0;opacity:.85}
+.body{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25em;aspect-ratio:3/4;border-radius:22% / 16.5%;background:var(--plate);box-shadow:0 0 0 1px var(--plate-line) inset,0 1px 2px rgba(0,0,0,.12);transition:box-shadow .25s}
+.plate.a .body{background:linear-gradient(135deg,var(--alu1),var(--alu2))}
+.cup{position:absolute;width:17%;aspect-ratio:1;border-radius:50%;background:var(--cup);box-shadow:0 0 0 1px var(--plate-line) inset}
+.cup:nth-child(1){left:9%;top:7%}.cup:nth-child(2){right:9%;top:7%}.cup:nth-child(3){left:9%;bottom:7%}.cup:nth-child(4){right:9%;bottom:7%}
+.pill{position:relative;background:#fff;color:#1d1d1f;border-radius:.35em;padding:.1em .22em;letter-spacing:-.02em;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;box-shadow:0 0 0 1px rgba(0,0,0,.14);max-width:96%;white-space:nowrap}
+.pill.sn{font-size:.72em;color:#6e6e73}
+.dim .plate:not(.match):not(.sel){opacity:.2}
+.plate.match .body,.plate.sel .body{box-shadow:0 0 0 3px var(--accent),0 0 16px color-mix(in srgb,var(--accent) 55%,transparent)}
+.plate.sel{animation:pulse .9s ease 2}
+@keyframes pulse{50%{transform:scale(1.09)}}
+
+.loose{display:flex;flex-direction:column;gap:1px;border-radius:16px;overflow:hidden}
+.loose .hit{background:var(--panel)}
+.hint{margin:0 8px 12px;font-size:14px;color:var(--mute)}
+
+footer{margin-top:22px;text-align:center;color:var(--mute);font-size:13px;line-height:1.6}
+footer button{border:0;background:none;color:var(--accent);font-size:15px;font-weight:500;cursor:pointer;padding:8px 12px}
+
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;pointer-events:none}
+.sheet .in{pointer-events:auto;width:100%;max-width:560px;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-radius:28px 28px 0 0;padding:16px 20px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.18);transform:translateY(110%);transition:transform .45s cubic-bezier(.2,.9,.2,1);visibility:hidden}
+.sheet.open .in{transform:none;visibility:visible}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:-4px auto 14px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.big{font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.big.sn{font-size:30px;letter-spacing:-.01em;padding-top:8px}
+.desc{margin-top:8px;color:var(--mute);font-size:16px;text-transform:capitalize;overflow-wrap:anywhere}
+.close{flex:none;border:0;background:var(--line);width:32px;height:32px;border-radius:50%;font-size:19px;line-height:1;cursor:pointer;padding:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chip{background:var(--bg);border-radius:14px;padding:10px 14px;flex:1 1 0;min-width:86px}
+.chip b{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-bottom:2px}
+.chip span{font-weight:700;font-size:20px}
+.chip small{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-top:1px}
+.same{margin-top:4px;color:var(--mute);font-size:14px}
+.same:empty{display:none}
+.how h3{margin:0;font-size:22px;letter-spacing:-.015em}
+.how h4{margin:16px 0 4px;font-size:15px}
+.how ol{margin:0;padding-left:20px;color:var(--mute);font-size:15px;line-height:1.55}
+[hidden]{display:none!important}
+.wait .fab,.wait .plus{display:none}
+.hero{padding:72px 4px 8px}
+.hero h2{margin:0;font-size:34px;letter-spacing:-.022em}
+.hero p{margin:8px 0 0;color:var(--mute);font-size:16px;line-height:1.4}
+.cta{width:100%;height:52px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:17px;font-weight:600;cursor:pointer;margin-top:8px}
+.cta:disabled{opacity:.5}
+.import{display:inline-flex;align-items:center;justify-content:center;position:relative;margin:0 8px 8px;height:46px;padding:0 18px;border-radius:14px;background:var(--accent);color:#fff;font-weight:600;font-size:16px;cursor:pointer}
+.import input{position:absolute;opacity:0;width:1px;height:1px}
+.danger{color:#e5484d!important}
+.link{border:0;background:none;color:var(--accent);font-size:15px;cursor:pointer;padding:8px}
+.shelves button.plus{color:var(--accent);font-size:22px;font-weight:400}
+.fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(20px + env(safe-area-inset-bottom));z-index:8;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:32px;font-weight:300;line-height:1;cursor:pointer;padding:0 0 4px;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 45%,transparent);transition:transform .2s}
+.fab:active{transform:scale(.92)}
+.acts{display:flex;gap:8px;margin-top:12px}
+.acts button{flex:1;height:46px;border:0;border-radius:14px;background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;color:var(--accent)}
+.acts button.go{background:var(--accent);color:#fff}
+.ask p{margin:0 0 4px;font-size:18px;font-weight:600;text-wrap:balance}
+.modal{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;transform:translateY(100%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.9,.2,1),visibility 0s .4s}
+.modal.open{transform:none;visibility:visible;transition:transform .4s cubic-bezier(.2,.9,.2,1)}
+.modal form{max-width:560px;margin:0 auto;padding:0 16px 60px}
+.bar{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:56px;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.bar button{border:0;background:none;color:var(--accent);font-size:17px;cursor:pointer;padding:10px 2px;justify-self:start}
+.bar button.pri{font-weight:700;justify-self:end}
+.bar strong{font-size:17px}
+.group{background:var(--card);border-radius:16px;margin-top:16px;padding-left:16px}
+.group label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding-right:16px;font-size:17px;border-bottom:1px solid var(--line);white-space:nowrap}
+.group label:last-child{border-bottom:0}
+.group input,.group select{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:17px;text-align:right;text-align-last:right;height:50px;-webkit-appearance:none;appearance:none;border-radius:0}
+.group select{color:var(--accent)}
+.group select:disabled{color:var(--mute);opacity:1}
+.group label:focus-within{box-shadow:-16px 0 0 0 color-mix(in srgb,var(--accent) 10%,transparent),0 0 0 0 transparent;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.help{color:var(--mute);font-size:13px;margin:8px 16px 0}
+.err{color:#e5484d;font-size:15px;font-weight:500;margin:16px 16px 0;min-height:22px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Máscaras</h1>
+  <p id="sub"></p>
+</header>
+
+<div class="search">
+  <label class="field" id="field">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Número do molde ou nome" aria-label="Buscar máscara pelo número do molde ou pelo nome">
+    <button type="button" id="clear" aria-label="Limpar busca">×</button>
+  </label>
+  <div class="hits" id="hits"></div>
+  <div class="note" id="note" aria-live="polite"></div>
+</div>
+
+<nav class="shelves" id="shelves" aria-label="Prateleiras"></nav>
+
+<section class="board" id="board">
+  <h2><span id="bTitle" style="font-size:inherit;font-weight:inherit;color:inherit;letter-spacing:inherit"></span><span id="bCount"></span></h2>
+  <div id="rows"></div>
+</section>
+
+<footer>
+  <div>Lugares conforme a ficha TB AUT 01, rev. 04, de 09/11/2026.</div>
+  <button type="button" id="howBtn">Como instalar no celular</button>
+  <div id="localNote" hidden>As alterações feitas aqui ficam salvas só neste celular.</div>
+  <button type="button" id="resetBtn" class="danger" hidden>Restaurar lista original</button>
+  <button type="button" id="outBtn" hidden>Sair deste celular</button>
+</footer>
+
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="in" role="dialog" aria-label="Detalhes da máscara">
+    <div class="grab"></div>
+    <div class="top">
+      <div>
+        <div class="big" id="sNum"></div>
+        <div class="desc" id="sDesc"></div>
+        <div class="same" id="sSame"></div>
+      </div>
+      <button class="close" type="button" data-close aria-label="Fechar">×</button>
+    </div>
+    <div class="chips" id="sChips"></div>
+    <div class="acts"><button type="button" id="sEdit">Editar</button><button type="button" id="sDel" class="danger">Remover</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="how" aria-hidden="true">
+  <div class="in how" role="dialog" aria-label="Como instalar">
+    <div class="grab"></div>
+    <div class="top">
+      <h3>Instalar no celular</h3>
+      <button class="close" type="button" data-close aria-label="Fechar">×</button>
+    </div>
+    <h4>iPhone</h4>
+    <ol><li>Abra este link no Safari.</li><li>Toque em Compartilhar.</li><li>Escolha "Adicionar à Tela de Início".</li></ol>
+    <h4>Android</h4>
+    <ol><li>Abra este link no Chrome.</li><li>Toque no menu de três pontos.</li><li>Escolha "Instalar app" ou "Adicionar à tela inicial".</li></ol>
+    <h4>Sem internet</h4>
+    <ol><li>Depois de aberto uma vez com internet, o app funciona offline.</li><li>As atualizações chegam sozinhas quando houver conexão.</li></ol>
+  </div>
+</div>
+
+<div class="sheet" id="ask" aria-hidden="true">
+  <div class="in ask" role="alertdialog" aria-label="Confirmação">
+    <div class="grab"></div>
+    <p id="askText"></p>
+    <div class="acts"><button type="button" data-close>Cancelar</button><button type="button" id="askGo" class="go"></button></div>
+  </div>
+</div>
+
+<button type="button" class="fab" id="add" aria-label="Adicionar máscara">+</button>
+
+<div class="modal" id="form" aria-hidden="true">
+  <form id="f" novalidate>
+    <div class="bar"><button type="button" id="fCancel">Cancelar</button><strong id="fTitle">Nova máscara</strong><button type="submit" class="pri">Salvar</button></div>
+    <div class="group">
+      <label for="fN1">Número do molde<input id="fN1" inputmode="numeric" autocomplete="off" placeholder="Ex.: 941"></label>
+      <label for="fN2">Segundo número<input id="fN2" inputmode="numeric" autocomplete="off" placeholder="Opcional"></label>
+      <label for="fD">Nome<input id="fD" autocomplete="off" placeholder="Ex.: Balde 20 litros"></label>
+    </div>
+    <p class="help">Molde ainda sem número? Deixe o número vazio e preencha só o nome.</p>
+    <div class="group">
+      <label for="fS">Prateleira<select id="fS"></select></label>
+      <label for="fA">Andar<select id="fA"></select></label>
+      <label for="fP">Posição<select id="fP"></select></label>
+      <label for="fT">Material<select id="fT"><option value="w">Plástico branco</option><option value="a">Alumínio</option></select></label>
+    </div>
+    <p class="help">A posição conta da esquerda para a direita, olhando a prateleira de frente.</p>
+    <p class="err" id="fErr" role="alert"></p>
+  </form>
+</div>
+
+<div class="modal" id="login" aria-hidden="true">
+  <form id="lf" novalidate>
+    <div class="hero"><h2>Máscaras</h2><p>Digite a senha do setor para entrar. Só é preciso uma vez neste celular.</p></div>
+    <div class="group"><label for="lp">Senha<input id="lp" type="password" autocomplete="current-password" placeholder="Senha do setor"></label></div>
+    <p class="err" id="lErr" role="alert"></p>
+    <button type="submit" class="cta" id="lGo">Entrar</button>
+  </form>
+</div>
+<script src="firebase-app-compat.js"></script>
+<script src="firebase-auth-compat.js"></script>
+<script src="firebase-firestore-compat.js"></script>
+
+<script>
+var BASE = /*DATA*/[];
+var FB = {"apiKey":"AIzaSyBkows79dBE8M-k3n6AMeROIsXmrmcjfjM","authDomain":"armazenamento-de-garras.firebaseapp.com","projectId":"armazenamento-de-garras","storageBucket":"armazenamento-de-garras.firebasestorage.app","messagingSenderId":"262555537859","appId":"1:262555537859:web:fd4166f775e2cea599ed76"}, EMAIL = 'equipe@armazenamento-de-garras.firebaseapp.com';
+var CLOUD = !!(FB && window.firebase), auth = null, db = null, ready = false, pending = false, fromCache = true;
+var KEY = 'mascaras-dados-v1', D = [], SHELVES = 12, edited = false;
+var LOOSE = 0, current = 1, selected = null, query = '';
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function norm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+function label(m){ return m.n.length ? m.n.join(' / ') : 'Sem número'; }
+function where(m){ return m.s ? 'P' + m.s + ' · ' + m.a : 'Sem lugar'; }
+function load(){
+  edited = false;
+  if (CLOUD){ D = []; SHELVES = 12; return; }
+  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && st.items && st.items.length){ D = st.items; SHELVES = st.shelves || 12; edited = true; return; } } catch (e) {}
+  D = JSON.parse(JSON.stringify(BASE)); SHELVES = 12;
+}
+function save(){
+  if (CLOUD){ push(); return; }
+  edited = true;
+  try { localStorage.setItem(KEY, JSON.stringify({ shelves: SHELVES, items: D.map(function(m){ return { id: m.id, n: m.n, d: m.d, s: m.s, a: m.a, p: m.p, t: m.t }; }) })); } catch (e) {}
+}
+function index(){ D.forEach(function(m, i){ m.i = i; m.k = norm(m.d); if (!m.id) m.id = m.n.length ? 'm' + m.n[0] : 'x' + i; }); }
+function renum(){
+  var g = {};
+  D.forEach(function(m){ if (!m.s){ m.a = ''; m.p = 0; return; } (g[m.s + m.a] = g[m.s + m.a] || []).push(m); });
+  Object.keys(g).forEach(function(k){ g[k].sort(function(x, y){ return x.p - y.p; }).forEach(function(m, i){ m.p = i + 1; }); });
+}
+load(); index();
+function inShelf(s){ return D.filter(function(m){ return m.s === s; }); }
+
+try { var saved = +localStorage.getItem('prateleira'); if (saved >= 0 && saved <= SHELVES && localStorage.getItem('prateleira') !== null) current = saved; } catch (e) {}
+
+function updateSub(){
+  var t = D.length + ' máscaras · ' + SHELVES + ' prateleiras';
+  if (CLOUD) t = !ready ? 'Carregando…' : t + ' · ' + (navigator.onLine ? (pending ? 'enviando alterações…' : 'sincronizado') : (pending ? 'offline, alterações guardadas' : 'offline'));
+  $('sub').textContent = t;
+}
+
+function renderShelves(){
+  var nav = $('shelves'); nav.innerHTML = '';
+  var list = []; for (var k = 1; k <= SHELVES; k++) list.push(k); list.push(LOOSE);
+  updateSub();
+  list.forEach(function(s){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = s ? s : 'Sem lugar';
+    if (!s) b.className = 'txt';
+    b.setAttribute('aria-pressed', s === current ? 'true' : 'false');
+    b.setAttribute('aria-label', s ? 'Prateleira ' + s : 'Máscaras sem lugar');
+    b.addEventListener('click', function(){ show(s); });
+    nav.appendChild(b);
+  });
+  var plus = document.createElement('button');
+  plus.type = 'button'; plus.className = 'plus'; plus.textContent = '+';
+  plus.setAttribute('aria-label', 'Criar nova prateleira');
+  plus.addEventListener('click', function(){ ask('Criar a prateleira ' + (SHELVES + 1) + '?', 'Criar', function(){ SHELVES++; save(); show(SHELVES); foot(); }); });
+  nav.appendChild(plus);
+  var act = nav.querySelector('[aria-pressed="true"]');
+  if (act) nav.scrollLeft = Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2);
+}
+
+function plateHtml(m, n){
+  var pills = m.n.length ? m.n.map(function(x){ return '<span class="pill">' + x + '</span>'; }).join('') : '<span class="pill sn">S/N</span>';
+  return '<button type="button" class="plate ' + m.t + '" data-i="' + m.i + '" aria-label="Máscara ' + esc(label(m)) + ', ' + esc(m.d) + ', andar ' + m.a + ', posição ' + m.p + '">' +
+    '<span class="tube"></span><span class="body"><i class="cup"></i><i class="cup"></i><i class="cup"></i><i class="cup"></i>' + pills + '</span></button>';
+}
+function hitHtml(m){
+  return '<button type="button" class="hit" data-i="' + m.i + '"><strong>' + esc(m.n.length ? m.n.join('/') : 'S/N') + '</strong><span class="d">' + esc(m.d.toLowerCase()) + '</span><span class="w">' + where(m) + '</span></button>';
+}
+
+function renderBoard(){
+  var rows = $('rows'), items = inShelf(current);
+  if (CLOUD && (!ready || !D.length)){
+    $('bTitle').textContent = 'Prateleira ' + (current || 1); $('bCount').textContent = '';
+    rows.innerHTML = !ready ? '<p class="hint">Carregando a lista…</p>'
+      : fromCache ? '<p class="hint">Conecte à internet para baixar a lista pela primeira vez.</p>'
+      : '<p class="hint">A lista está vazia. Importe o arquivo dados-iniciais.json para começar.</p><label class="import">Importar lista inicial<input type="file" id="seed" accept=".json,application/json"></label>';
+    var sd = $('seed'); if (sd) sd.addEventListener('change', importSeed);
+    return;
+  }
+  if (!current){
+    $('bTitle').textContent = 'Sem lugar';
+    $('bCount').textContent = items.length + ' máscaras';
+    rows.innerHTML = '<p class="hint">Ainda não têm prateleira definida na ficha.</p><div class="loose">' + items.map(hitHtml).join('') + '</div>';
+  } else {
+    $('bTitle').textContent = 'Prateleira ' + current;
+    $('bCount').textContent = items.length + ' máscaras';
+    var html = '';
+    'ABCDEF'.split('').forEach(function(a){
+      var r = items.filter(function(m){ return m.a === a; }).sort(function(x, y){ return x.p - y.p; });
+      if (!r.length) return;
+      html += '<div class="andar"><b>' + a + '</b><div class="row" style="--n:' + Math.max(r.length, 4) + '">' + r.map(function(m){ return plateHtml(m, r.length); }).join('') + '</div></div>';
+    });
+    if (!items.length) html = '<p class="hint">Sem máscaras ainda. Toque em + para adicionar a primeira.</p>' + (current === SHELVES && SHELVES > 1 ? '<button type="button" class="link danger" id="delShelf">Remover esta prateleira</button>' : '');
+    rows.innerHTML = html;
+    var ds = $('delShelf');
+    if (ds) ds.addEventListener('click', function(){ ask('Remover a prateleira ' + current + '?', 'Remover', function(){ SHELVES--; save(); show(SHELVES); foot(); }); });
+  }
+  rows.style.animation = 'none'; void rows.offsetWidth; rows.style.animation = '';
+  mark();
+}
+
+function matches(m){
+  if (!query) return false;
+  if (/^\d+$/.test(query)) return m.n.some(function(x){ return String(x).indexOf(query) === 0; });
+  return m.k.indexOf(query) !== -1;
+}
+function mark(){
+  $('rows').classList.toggle('dim', !!query || !!selected);
+  Array.prototype.forEach.call($('rows').querySelectorAll('.plate'), function(el){
+    var m = D[+el.dataset.i];
+    el.classList.toggle('match', matches(m));
+    el.classList.toggle('sel', selected === m);
+  });
+}
+function search(){
+  var hits = $('hits'), note = $('note');
+  hits.innerHTML = ''; note.textContent = '';
+  if (!query){ mark(); return; }
+  var found = D.filter(matches);
+  var num = /^\d+$/.test(query);
+  found.sort(function(x, y){
+    var ex = num && x.n.some(function(v){ return String(v) === query; }), ey = num && y.n.some(function(v){ return String(v) === query; });
+    return (ey - ex) || ((x.n[0] || 9999) - (y.n[0] || 9999));
+  });
+  if (!found.length){ note.textContent = 'Nenhuma máscara encontrada para "' + $('q').value.trim() + '".'; mark(); return; }
+  hits.innerHTML = found.slice(0, 8).map(hitHtml).join('');
+  if (found.length > 8) note.textContent = 'Mostrando 8 de ' + found.length + '. Continue digitando para refinar.';
+  if (found.length === 1 && found[0].s !== current){ current = found[0].s; renderShelves(); renderBoard(); }
+  else mark();
+}
+
+function show(s){
+  current = s; closeSheets();
+  try { localStorage.setItem('prateleira', s); } catch (e) {}
+  renderShelves(); renderBoard();
+}
+function open(m){
+  if (m.s !== current){ current = m.s; renderShelves(); renderBoard(); }
+  selected = m;
+  $('sNum').textContent = label(m);
+  $('sNum').className = 'big' + (m.n.length ? '' : ' sn');
+  $('sDesc').textContent = m.d.toLowerCase();
+  $('sSame').textContent = m.n.length > 1 ? 'Uma máscara só, para os dois moldes.' : '';
+  var total = D.filter(function(x){ return x.s === m.s && x.a === m.a; }).length;
+  $('sChips').innerHTML = m.s
+    ? '<div class="chip"><b>Prateleira</b><span>' + m.s + '</span></div><div class="chip"><b>Andar</b><span>' + m.a + '</span></div><div class="chip"><b>Posição</b><span>' + m.p + 'ª</span><small>de ' + total + ', da esquerda</small></div>'
+    : '<div class="chip"><b>Lugar</b><span>Sem lugar definido</span></div>';
+  $('how').classList.remove('open');
+  $('sheet').classList.add('open'); $('sheet').setAttribute('aria-hidden', 'false');
+  mark();
+  var el = $('rows').querySelector('.plate[data-i="' + m.i + '"]');
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function closeSheets(){
+  selected = null;
+  ['sheet', 'how', 'ask'].forEach(function(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden', 'true'); });
+  mark();
+}
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('[data-i],[data-close]') : null;
+  if (!t) return;
+  if (t.hasAttribute('data-close')){ closeSheets(); return; }
+  if (t.classList.contains('hit')) $('q').blur();
+  open(D[+t.dataset.i]);
+});
+var q = $('q'), field = $('field');
+q.addEventListener('input', function(){
+  query = norm(q.value.trim());
+  field.classList.toggle('has', !!q.value);
+  if (selected) closeSheets();
+  search();
+});
+$('clear').addEventListener('click', function(){ q.value = ''; query = ''; field.classList.remove('has'); search(); q.focus(); });
+$('howBtn').addEventListener('click', function(){ closeSheets(); $('how').classList.add('open'); $('how').setAttribute('aria-hidden', 'false'); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSheets(); });
+
+/* deslizar para os lados troca de prateleira */
+var sx = 0, sy = 0;
+$('board').addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+$('board').addEventListener('touchend', function(e){
+  var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) < 70 || Math.abs(dy) > 45 || !current) return;
+  var next = current + (dx < 0 ? 1 : -1);
+  if (next >= 1 && next <= SHELVES) show(next);
+}, { passive: true });
+
+/* confirmação */
+var askFn = null;
+function ask(text, go, fn){
+  closeSheets();
+  $('askText').textContent = text; $('askGo').textContent = go; askFn = fn;
+  $('ask').classList.add('open'); $('ask').setAttribute('aria-hidden', 'false');
+}
+$('askGo').addEventListener('click', function(){ var f = askFn; askFn = null; closeSheets(); if (f) f(); });
+function foot(){ $('localNote').hidden = CLOUD || !edited; $('resetBtn').hidden = CLOUD || !edited; $('outBtn').hidden = !(CLOUD && auth && auth.currentUser); }
+function refresh(){ index(); renderShelves(); renderBoard(); search(); foot(); }
+
+/* cadastro e edição */
+var editing = null, fS = $('fS'), fA = $('fA'), fP = $('fP');
+function fillPos(){
+  var s = +fS.value, a = fA.value;
+  fA.disabled = fP.disabled = !s;
+  if (!s){ fP.innerHTML = '<option value="0">Sem posição</option>'; return; }
+  var n = D.filter(function(x){ return x.s === s && x.a === a && x !== editing; }).length + 1, h = '';
+  for (var i = 1; i <= n; i++) h += '<option value="' + i + '">' + i + 'ª' + (i === 1 && n > 1 ? ' (mais à esquerda)' : i === n && n > 1 ? ' (mais à direita)' : '') + '</option>';
+  fP.innerHTML = h;
+  fP.value = editing && editing.s === s && editing.a === a ? editing.p : n;
+}
+function openForm(m){
+  closeSheets(); editing = m || null;
+  $('fTitle').textContent = m ? 'Editar máscara' : 'Nova máscara';
+  $('fN1').value = m && m.n[0] ? m.n[0] : ''; $('fN2').value = m && m.n[1] ? m.n[1] : '';
+  $('fD').value = m ? m.d : ''; $('fT').value = m ? m.t : 'w'; $('fErr').textContent = '';
+  var h = '';
+  for (var k = 1; k <= SHELVES; k++) h += '<option value="' + k + '">' + k + '</option>';
+  fS.innerHTML = h + '<option value="0">Sem lugar</option>';
+  fS.value = m ? m.s : current;
+  fA.innerHTML = 'ABCDEF'.split('').map(function(a){ return '<option>' + a + '</option>'; }).join('');
+  fA.value = m && m.a ? m.a : 'A';
+  fillPos();
+  $('form').classList.add('open'); $('form').setAttribute('aria-hidden', 'false'); $('form').scrollTop = 0;
+}
+function closeForm(){ $('form').classList.remove('open'); $('form').setAttribute('aria-hidden', 'true'); editing = null; if (document.activeElement) document.activeElement.blur(); }
+fS.addEventListener('change', fillPos); fA.addEventListener('change', fillPos);
+$('fCancel').addEventListener('click', closeForm);
+$('f').addEventListener('input', function(){ $('fErr').textContent = ''; });
+$('f').addEventListener('submit', function(e){
+  e.preventDefault();
+  var raw1 = $('fN1').value.trim(), raw2 = $('fN2').value.trim(), d = $('fD').value.trim().toUpperCase(), err = '';
+  var n1 = raw1 ? parseInt(raw1, 10) : 0, n2 = raw2 ? parseInt(raw2, 10) : 0;
+  if ((raw1 && !/^\d+$/.test(raw1)) || (raw2 && !/^\d+$/.test(raw2))) err = 'O número do molde deve ter só algarismos.';
+  else if (!n1 && n2) err = 'Preencha o primeiro número antes do segundo.';
+  else if (!n1 && !d) err = 'Informe o número do molde ou o nome.';
+  else if (n1 && n1 === n2) err = 'Os dois números são iguais.';
+  else [n1, n2].forEach(function(v){
+    var dup = v && D.filter(function(x){ return x !== editing && x.n.indexOf(v) !== -1; })[0];
+    if (dup && !err) err = 'O molde ' + v + ' já está cadastrado (' + where(dup) + ').';
+  });
+  if (err){ $('fErr').textContent = err; return; }
+  var m = editing || { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+  if (!editing) D.push(m);
+  m.n = [n1, n2].filter(Boolean); m.d = d; m.t = $('fT').value;
+  m.s = +fS.value; m.a = m.s ? fA.value : ''; m.p = m.s ? +fP.value - 0.5 : 0;
+  renum(); save(); closeForm();
+  current = m.s; refresh();
+  try { localStorage.setItem('prateleira', current); } catch (e2) {}
+  open(m);
+});
+$('add').addEventListener('click', function(){ openForm(null); });
+$('sEdit').addEventListener('click', function(){ if (selected) openForm(selected); });
+$('sDel').addEventListener('click', function(){
+  var m = selected; if (!m) return;
+  ask('Remover a máscara ' + label(m) + ' da lista?', 'Remover', function(){ D.splice(D.indexOf(m), 1); renum(); save(); refresh(); });
+});
+$('resetBtn').addEventListener('click', function(){
+  ask('Restaurar a lista original? As alterações feitas neste celular serão apagadas.', 'Restaurar', function(){
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    load(); if (current > SHELVES) current = 1; refresh();
+  });
+});
+
+/* sincronização entre os celulares (Firebase) */
+var unsub = [], got = { m: false, c: false }, remote = {}, remoteShelves = 12, lastSig = '';
+function sig(m){ return JSON.stringify([m.n, m.d, m.s, m.a, m.p, m.t]); }
+function applyShelves(){ var mx = remoteShelves; D.forEach(function(m){ if (m.s > mx) mx = m.s; }); SHELVES = mx; if (current > SHELVES) current = 1; }
+function setReady(){ ready = got.m && got.c; document.body.classList.toggle('wait', !ready); }
+function cloudErr(e){
+  var c = e && e.code || '';
+  $('note').textContent = c === 'permission-denied' ? 'Sem permissão para acessar a lista. Confira as regras do Firebase.' : 'Erro de sincronização' + (c ? ' (' + c + ').' : '.');
+}
+function listen(){
+  if (unsub.length) return;
+  unsub.push(db.collection('mascaras').onSnapshot({ includeMetadataChanges: true }, function(snap){
+    pending = snap.metadata.hasPendingWrites; fromCache = snap.metadata.fromCache;
+    var list = [], rem = {};
+    snap.forEach(function(doc){
+      var x = doc.data(), m = { id: doc.id, n: x.n || [], d: x.d || '', s: x.s || 0, a: x.a || '', p: x.p || 0, t: x.t || 'w' };
+      list.push(m); rem[doc.id] = sig(m);
+    });
+    list.sort(function(x, y){ return (x.n[0] || 99999) - (y.n[0] || 99999) || (x.id < y.id ? -1 : 1); });
+    var sg = list.map(function(m){ return m.id + rem[m.id]; }).join('|') + '#' + fromCache;
+    var first = !got.m; got.m = true; setReady();
+    if (sg === lastSig && !first){ updateSub(); return; }
+    lastSig = sg;
+    var selId = selected && selected.id, edId = editing && editing.id, by = {};
+    D = list; remote = rem; index(); applyShelves();
+    D.forEach(function(m){ by[m.id] = m; });
+    if (edId){ if (by[edId]) editing = by[edId]; else closeForm(); }
+    if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } }
+    renderShelves(); renderBoard(); search(); foot();
+  }, cloudErr));
+  unsub.push(db.collection('config').doc('geral').onSnapshot(function(d){
+    var v = d.exists ? +d.data().shelves : 0; remoteShelves = v || 12;
+    got.c = true; setReady(); applyShelves(); renderShelves(); renderBoard(); search();
+  }, cloudErr));
+}
+function stopListen(){
+  unsub.forEach(function(f){ f(); }); unsub = []; got = { m: false, c: false }; lastSig = ''; remote = {}; D = [];
+  selected = null; index(); setReady(); renderShelves(); renderBoard();
+}
+function push(){
+  if (!ready) return;
+  var ops = [], seen = {}, col = db.collection('mascaras');
+  D.forEach(function(m){
+    seen[m.id] = 1; var g = sig(m);
+    if (remote[m.id] !== g){ ops.push([col.doc(m.id), { n: m.n, d: m.d, s: m.s, a: m.a, p: m.p, t: m.t }]); remote[m.id] = g; }
+  });
+  Object.keys(remote).forEach(function(id){ if (!seen[id]){ ops.push([col.doc(id), null]); delete remote[id]; } });
+  if (SHELVES !== remoteShelves){ ops.push([db.collection('config').doc('geral'), { shelves: SHELVES }]); remoteShelves = SHELVES; }
+  for (var i = 0; i < ops.length; i += 400){
+    var b = db.batch();
+    ops.slice(i, i + 400).forEach(function(o){ if (o[1]) b.set(o[0], o[1]); else b.delete(o[0]); });
+    b.commit().catch(cloudErr);
+  }
+}
+function importSeed(e){
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var arr = JSON.parse(r.result);
+      if (!Array.isArray(arr) || !arr.length || !Array.isArray(arr[0].n)) throw 0;
+      D = arr.map(function(x){ return { id: x.id, n: x.n, d: x.d || '', s: x.s || 0, a: x.a || '', p: x.p || 0, t: x.t || 'w' }; });
+      index(); applyShelves(); push(); renderShelves(); renderBoard();
+    } catch (er) { $('note').textContent = 'Esse arquivo não é a lista inicial (dados-iniciais.json).'; }
+  };
+  r.readAsText(f);
+}
+function startCloud(){
+  document.body.classList.add('wait');
+  try {
+    firebase.initializeApp(FB); auth = firebase.auth(); db = firebase.firestore();
+    db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+    auth.onAuthStateChanged(function(u){
+      var lg = $('login');
+      if (u){ lg.classList.remove('open'); lg.setAttribute('aria-hidden', 'true'); $('lp').value = ''; listen(); }
+      else { stopListen(); lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); }
+      foot();
+    });
+  } catch (er) { $('note').textContent = 'Não foi possível iniciar a sincronização.'; }
+}
+$('lf').addEventListener('submit', function(e){
+  e.preventDefault(); if (!auth) return;
+  var pw = $('lp').value, msg = { 'auth/wrong-password': 'Senha incorreta.', 'auth/invalid-credential': 'Senha incorreta.', 'auth/invalid-login-credentials': 'Senha incorreta.', 'auth/user-not-found': 'O acesso ainda não foi criado no Firebase.', 'auth/network-request-failed': 'Sem internet. O primeiro acesso precisa de conexão.', 'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.' };
+  if (!pw){ $('lErr').textContent = 'Digite a senha.'; return; }
+  $('lErr').textContent = ''; $('lGo').disabled = true;
+  auth.signInWithEmailAndPassword(EMAIL, pw).catch(function(er){ $('lErr').textContent = msg[er.code] || 'Não foi possível entrar (' + (er.code || 'erro') + ').'; }).then(function(){ $('lGo').disabled = false; });
+});
+$('outBtn').addEventListener('click', function(){ ask('Sair deste celular? Para entrar de novo será preciso a senha e internet.', 'Sair', function(){ auth.signOut(); }); });
+window.addEventListener('online', updateSub); window.addEventListener('offline', updateSub);
+
+renderShelves(); renderBoard(); foot();
+if (CLOUD) startCloud();
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  try { navigator.serviceWorker.register('sw.js').catch(function(){}); } catch (e) {}
+}
+</script>
+</body>
+</html>
