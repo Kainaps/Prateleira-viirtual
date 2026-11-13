@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Prateleira de Máscaras</title>
+<title>Prateleira de Garras</title>
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Máscaras">
+<meta name="apple-mobile-web-app-title" content="Garras">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -213,14 +213,14 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 </head>
 <body>
 <header>
-  <h1>Máscaras</h1>
+  <h1>Garras</h1>
   <p id="sub"></p>
 </header>
 
 <div class="search">
   <label class="field" id="field">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Número do molde ou nome" aria-label="Buscar máscara pelo número do molde ou pelo nome">
+    <input id="q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Número do molde ou nome" aria-label="Buscar garra pelo número do molde ou pelo nome">
     <button type="button" id="clear" aria-label="Limpar busca">×</button>
   </label>
   <div class="hits" id="hits"></div>
@@ -242,7 +242,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 </footer>
 
 <div class="sheet" id="sheet" aria-hidden="true">
-  <div class="in" role="dialog" aria-label="Detalhes da máscara">
+  <div class="in" role="dialog" aria-label="Detalhes da garra">
     <div class="grab"></div>
     <div class="top">
       <div>
@@ -263,7 +263,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
     <div class="grab"></div>
     <p id="mTitle"></p>
     <div class="same" id="mSub"></div>
-    <div class="acts col"><button type="button" id="mAdd">Adicionar máscara aqui</button><button type="button" id="mDel" class="danger">Remover prateleira</button><button type="button" data-close>Cancelar</button></div>
+    <div class="acts col"><button type="button" id="mAdd">Adicionar garra aqui</button><button type="button" id="mDel" class="danger">Remover prateleira</button><button type="button" data-close>Cancelar</button></div>
   </div>
 </div>
 
@@ -276,11 +276,11 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
   </div>
 </div>
 
-<button type="button" class="fab" id="add" aria-label="Adicionar máscara">+</button>
+<button type="button" class="fab" id="add" aria-label="Adicionar garra">+</button>
 
 <div class="modal" id="form" aria-hidden="true">
   <form id="f" novalidate>
-    <div class="bar"><button type="button" id="fCancel">Cancelar</button><strong id="fTitle">Nova máscara</strong><button type="submit" class="pri">Salvar</button></div>
+    <div class="bar"><button type="button" id="fCancel">Cancelar</button><strong id="fTitle">Nova garra</strong><button type="submit" class="pri">Salvar</button></div>
     <div class="group" id="g1">
       <label for="fN1">Número do molde<input id="fN1" inputmode="numeric" autocomplete="off" placeholder="Ex.: 941"></label>
       <label for="fN2">Segundo número<input id="fN2" inputmode="numeric" autocomplete="off" placeholder="Opcional"></label>
@@ -300,7 +300,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 
 <div class="modal" id="login" aria-hidden="true">
   <form id="lf" novalidate>
-    <div class="hero"><h2>Máscaras</h2><p>Digite a senha do setor para entrar. Só é preciso uma vez neste celular.</p></div>
+    <div class="hero"><h2>Garras</h2><p>Digite a senha do setor para entrar. Só é preciso uma vez neste celular.</p></div>
     <div class="group" id="lg"><label for="lp">Senha<input id="lp" type="password" autocomplete="current-password" placeholder="Senha do setor"></label></div>
     <p class="err" id="lErr" role="alert"></p>
     <button type="submit" class="cta" id="lGo">Entrar</button>
@@ -308,7 +308,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 </div>
 <div class="modal" id="who" aria-hidden="true">
   <form id="wf" novalidate>
-    <div class="hero"><h2>Quem está usando?</h2><p>Seu nome aparece no histórico quando você adiciona, altera ou remove uma máscara.</p></div>
+    <div class="hero"><h2>Quem está usando?</h2><p>Seu nome aparece no histórico quando você adiciona, altera ou remove uma garra.</p></div>
     <div class="group" id="wg"><label for="wn">Nome<input id="wn" autocomplete="given-name" autocapitalize="words" maxlength="24" placeholder="Seu nome"></label></div>
     <p class="err" id="wErr" role="alert"></p>
     <button type="submit" class="cta">Continuar</button>
@@ -336,7 +336,7 @@ var KEY = 'mascaras-dados-v1', HKEY = 'mascaras-hist-v1', D = [], SH = [], edite
 try { NAME = localStorage.getItem('mascaras-nome') || ''; } catch (e) {}
 function seq(n){ var r = []; for (var k = 1; k <= n; k++) r.push(k); return r; }
 function maxSh(){ return SH.length ? SH[SH.length - 1] : 0; }
-function plural(n){ return n + (n === 1 ? ' máscara' : ' máscaras'); }
+function plural(n){ return n + (n === 1 ? ' garra' : ' garras'); }
 SH = seq(12);
 var REDUCE = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 /* troca de texto no lugar: sai para cima, entra de baixo (150 ms) */
@@ -434,7 +434,7 @@ function renderShelves(){
       b.type = 'button'; b.dataset.s = s;
       b.innerHTML = '<span>' + (s ? s : 'Sem lugar') + '</span>';
       if (!s) b.className = 'txt';
-      b.setAttribute('aria-label', s ? 'Prateleira ' + s : 'Máscaras sem lugar');
+      b.setAttribute('aria-label', s ? 'Prateleira ' + s : 'Garras sem lugar');
       b.addEventListener('click', function(){ show(s); });
       nav.appendChild(b);
     });
@@ -454,7 +454,7 @@ window.addEventListener('resize', function(){ movePill(false); });
 
 function plateHtml(m, n){
   var pills = m.n.length ? m.n.map(function(x){ return '<span class="pill">' + x + '</span>'; }).join('') : '<span class="pill sn">S/N</span>';
-  return '<button type="button" class="plate ' + m.t + '" data-i="' + m.i + '" aria-label="Máscara ' + esc(label(m)) + ', ' + esc(m.d) + ', andar ' + m.a + ', posição ' + m.p + '">' +
+  return '<button type="button" class="plate ' + m.t + '" data-i="' + m.i + '" aria-label="Garra ' + esc(label(m)) + ', ' + esc(m.d) + ', andar ' + m.a + ', posição ' + m.p + '">' +
     '<span class="tube"></span><span class="body"><i class="cup"></i><i class="cup"></i><i class="cup"></i><i class="cup"></i>' + pills + '</span></button>';
 }
 function hitHtml(m){
@@ -469,7 +469,7 @@ function paneData(s){
     if (!r.length) return;
     html += '<div class="andar"><b>' + a + '</b><div class="row" style="--n:' + Math.max(r.length, 4) + '">' + r.map(function(m){ return plateHtml(m, r.length); }).join('') + '</div></div>';
   });
-  if (!items.length) html = '<p class="hint">Sem máscaras ainda. Toque em + para adicionar a primeira.</p>';
+  if (!items.length) html = '<p class="hint">Sem garras ainda. Toque em + para adicionar a primeira.</p>';
   return { t: 'Prateleira ' + s, c: plural(items.length), h: html };
 }
 var slideFrom = 0;
@@ -523,7 +523,7 @@ function search(){
     var ex = num && x.n.some(function(v){ return String(v) === query; }), ey = num && y.n.some(function(v){ return String(v) === query; });
     return (ey - ex) || ((x.n[0] || 9999) - (y.n[0] || 9999));
   });
-  if (!found.length){ note.textContent = 'Nenhuma máscara encontrada para "' + $('q').value.trim() + '".'; mark(); return; }
+  if (!found.length){ note.textContent = 'Nenhuma garra encontrada para "' + $('q').value.trim() + '".'; mark(); return; }
   hits.innerHTML = found.slice(0, 8).map(hitHtml).join('');
   if (found.length > 8) note.textContent = 'Mostrando 8 de ' + found.length + '. Continue digitando para refinar.';
   if (found.length === 1 && found[0].s !== current){ finishAnim(); current = found[0].s; renderShelves(); renderBoard(); }
@@ -552,7 +552,7 @@ function open(m){
   $('sNum').textContent = label(m);
   $('sNum').className = 'big' + (m.n.length ? '' : ' sn');
   $('sDesc').textContent = m.d.toLowerCase();
-  $('sSame').textContent = m.n.length > 1 ? 'Uma máscara só, para os dois moldes.' : '';
+  $('sSame').textContent = m.n.length > 1 ? 'Uma garra só, para os dois moldes.' : '';
   var total = D.filter(function(x){ return x.s === m.s && x.a === m.a; }).length;
   $('sChips').innerHTML = m.s
     ? '<div class="chip"><b>Prateleira</b><span>' + m.s + '</span></div><div class="chip"><b>Andar</b><span>' + m.a + '</span></div><div class="chip"><b>Posição</b><span>' + m.p + 'ª</span><small>de ' + total + ', da esquerda</small></div>'
@@ -746,7 +746,7 @@ $('mDel').addEventListener('click', function(){
     var i = SH.indexOf(s); SH.splice(i, 1);
     log('sm', null, n ? plural(n) + (n === 1 ? ' foi' : ' foram') + ' para Sem lugar' : '', 'Prateleira ' + s);
     save(); show(n ? LOOSE : SH[Math.min(i, SH.length - 1)]); refresh(); toast('Prateleira ' + s + ' removida');
-  }, n ? (n === 1 ? 'A máscara dela vai' : 'As ' + n + ' máscaras dela vão') + ' para "Sem lugar". Nenhuma é apagada, e os números das outras prateleiras não mudam.' : 'Ela está vazia. Os números das outras prateleiras não mudam.', true);
+  }, n ? (n === 1 ? 'A garra dela vai' : 'As ' + n + ' garras dela vão') + ' para "Sem lugar". Nenhuma é apagada, e os números das outras prateleiras não mudam.' : 'Ela está vazia. Os números das outras prateleiras não mudam.', true);
 });
 
 /* confirmação */
@@ -774,7 +774,7 @@ function fillPos(){
 }
 function openForm(m){
   closeSheets(); editing = m || null;
-  $('fTitle').textContent = m ? 'Editar máscara' : 'Nova máscara';
+  $('fTitle').textContent = m ? 'Editar garra' : 'Nova garra';
   $('fN1').value = m && m.n[0] ? m.n[0] : ''; $('fN2').value = m && m.n[1] ? m.n[1] : '';
   $('fD').value = m ? m.d : ''; $('fT').value = m ? m.t : 'w'; clearErr($('fErr'), $('g1'));
   var h = '';
@@ -829,7 +829,7 @@ $('add').addEventListener('click', function(){ openForm(null); });
 $('sEdit').addEventListener('click', function(){ if (selected) openForm(selected); });
 $('sDel').addEventListener('click', function(){
   var m = selected; if (!m) return;
-  ask('Remover a máscara ' + label(m) + ' da lista?', 'Remover', function(){ D.splice(D.indexOf(m), 1); renum(); log('del', m, where(m)); save(); refresh(); toast('Máscara ' + label(m) + ' removida'); }, '', true);
+  ask('Remover a garra ' + label(m) + ' da lista?', 'Remover', function(){ D.splice(D.indexOf(m), 1); renum(); log('del', m, where(m)); save(); refresh(); toast('Garra ' + label(m) + ' removida'); }, '', true);
 });
 $('resetBtn').addEventListener('click', function(){
   ask('Restaurar a lista original? As alterações feitas neste celular serão apagadas.', 'Restaurar', function(){
@@ -839,7 +839,7 @@ $('resetBtn').addEventListener('click', function(){
 });
 
 /* histórico: quem fez o quê e quando */
-var VERB = { add: 'adicionou a máscara', edit: 'alterou a máscara', del: 'removeu a máscara', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
+var VERB = { add: 'adicionou a garra', edit: 'alterou a garra', del: 'removeu a garra', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
 function log(a, m, x, title){
   var e = { t: Date.now(), q: NAME || 'Sem nome', a: a, id: m ? m.id : '', m: m ? label(m) : (title || ''), d: m ? m.d : '', x: x || '' };
   if (m && a !== 'del'){ m.by = e.q; m.at = e.t; }
@@ -866,12 +866,12 @@ function drawHist(list){
     var sub = [e.d ? e.d.toLowerCase() : '', e.x].filter(Boolean).join(' · ');
     html += '<div class="hrow"><span class="av" style="background:hsl(' + hue(e.q) + ' 55% 45%)" aria-hidden="true">' + esc(e.q.charAt(0).toUpperCase()) + '</span><div><p><b>' + esc(e.q) + '</b> ' + (VERB[e.a] || 'alterou') + ' <b>' + esc(e.m.toLowerCase ? (/^Prateleira|^Lista/.test(e.m) ? e.m.toLowerCase() : e.m) : e.m) + '</b></p>' + (sub ? '<p class="x">' + esc(sub) + '</p>' : '') + '<time>' + hm(new Date(e.t)) + '</time></div></div>';
   });
-  $('hList').innerHTML = list.length ? html + '</div>' : '<p class="hempty">' + (hFilter ? 'Nenhuma alteração registrada para esta máscara.' : 'Nada registrado ainda.<br>As alterações feitas a partir de agora aparecem aqui, com o nome de quem fez.') + '</p>';
+  $('hList').innerHTML = list.length ? html + '</div>' : '<p class="hempty">' + (hFilter ? 'Nenhuma alteração registrada para esta garra.' : 'Nada registrado ainda.<br>As alterações feitas a partir de agora aparecem aqui, com o nome de quem fez.') + '</p>';
 }
 function loadHist(){
   if (hUnsub){ hUnsub(); hUnsub = null; }
   var fb = $('hFil'); fb.hidden = !hFilter;
-  if (hFilter) fb.textContent = 'Máscara ' + hFilter.label + '  ×';
+  if (hFilter) fb.textContent = 'Garra ' + hFilter.label + '  ×';
   if (!CLOUD){
     var h = []; try { h = JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) {}
     drawHist(hFilter ? h.filter(function(e){ return e.id === hFilter.id; }) : h); return;
