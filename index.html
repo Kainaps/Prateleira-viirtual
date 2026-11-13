@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
+/* GAVETA TELA (visual): cores, tamanhos e animações. Regras de movimento em build/MOTION.md */
 /* Layout: título, busca fixa no topo, seletor de prateleira, painel com um andar por faixa (A no alto), folha de detalhes embaixo. */
 :root{
   --bg:#f5f5f7; --card:#ffffff; --ink:#1d1d1f; --mute:#6e6e73; --line:#d2d2d7;
@@ -293,6 +294,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 .arow .w{font-size:13px;font-weight:600;background:var(--bg);border-radius:8px;padding:4px 8px;white-space:nowrap}
 .group label.full input{text-align:left;text-align-last:left}
 .okc.g{background:var(--good);box-shadow:0 12px 32px color-mix(in srgb,var(--good) 45%,transparent)}
+
 </style>
 </head>
 <body>
@@ -371,7 +373,7 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
     <div class="group" id="g1">
       <label for="fN1">Número do molde<input id="fN1" inputmode="numeric" autocomplete="off" placeholder="Ex.: 941"></label>
       <label for="fN2">Segundo número<input id="fN2" inputmode="numeric" autocomplete="off" placeholder="Opcional"></label>
-      <label for="fD">Nome<input id="fD" autocomplete="off" placeholder="Ex.: Balde 20 litros"></label>
+      <label for="fD">Nome<input id="fD" maxlength="80" autocomplete="off" placeholder="Ex.: Balde 20 litros"></label>
     </div>
     <p class="err inl" id="fErr" role="alert"></p>
     <p class="help">Molde ainda sem número? Deixe o número vazio e preencha só o nome.</p>
@@ -466,16 +468,292 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 <script src="firebase-firestore-compat.js"></script>
 
 <script>
-var BASE = /*DATA*/[];
-var FB = {"apiKey":"AIzaSyBkows79dBE8M-k3n6AMeROIsXmrmcjfjM","authDomain":"armazenamento-de-garras.firebaseapp.com","projectId":"armazenamento-de-garras","storageBucket":"armazenamento-de-garras.firebasestorage.app","messagingSenderId":"262555537859","appId":"1:262555537859:web:fd4166f775e2cea599ed76"}, EMAIL = 'equipe@armazenamento-de-garras.firebaseapp.com';
-var CLOUD = !!(FB && window.firebase), auth = null, db = null, ready = false, pending = false, fromCache = true;
-var KEY = 'mascaras-dados-v1', HKEY = 'mascaras-hist-v1', D = [], SH = [], edited = false, NAME = '';
-try { NAME = localStorage.getItem('mascaras-nome') || ''; } catch (e) {}
+/* GAVETA REGRAS: cálculo, validação e decisões. Não mexe na tela nem no banco. */
+
 function seq(n){ var r = []; for (var k = 1; k <= n; k++) r.push(k); return r; }
+
 function maxSh(){ return SH.length ? SH[SH.length - 1] : 0; }
+
 function plural(n){ return n + (n === 1 ? ' garra' : ' garras'); }
+
+function norm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+
+function label(m){ return m.n.length ? m.n.join(' / ') : 'Sem número'; }
+
+function where(m){ return m.s ? 'P' + m.s + ' · ' + m.a : 'Sem lugar'; }
+
+/* ---- limpeza de dados vindos de fora (nuvem, arquivo importado, armazenamento do celular) ----
+   Tudo passa por aqui antes de chegar à tela: tipos certos, valores conhecidos, tamanhos limitados.
+   Os mesmos limites estão nas regras do Firestore. */
+var LIM = { d: 80, ob: 400, who: 40, x: 600, m: 40 };
+
+function cStr(v, max){ return typeof v === 'string' ? v.slice(0, max) : ''; }
+
+function cInt(v, lo, hi){ v = Math.round(+v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo; }
+
+function clean(x, id){
+  x = x && typeof x === 'object' ? x : {};
+  var n = Array.isArray(x.n) ? x.n.map(Number).filter(function(v){ return v > 0 && v < 1e6 && Math.floor(v) === v; }).slice(0, 3) : [];
+  var sh = cInt(x.s, 0, 999), a = typeof x.a === 'string' && x.a.length === 1 && 'ABCDEF'.indexOf(x.a) !== -1 ? x.a : '';
+  if (sh && !a) a = 'A';
+  if (!sh) a = '';
+  var p = +x.p; p = isFinite(p) ? Math.min(999, Math.max(0, p)) : 0;
+  var pr = Array.isArray(x.pr) ? x.pr.filter(function(k){ return typeof k === 'string' && 'v f o m c p s'.split(' ').indexOf(k) !== -1; }).slice(0, 8) : [];
+  return { id: String(id || x.id || '').replace(/[^\w-]/g, '').slice(0, 40), n: n, d: cStr(x.d, LIM.d), s: sh, a: a, p: sh ? p : 0, t: x.t === 'a' ? 'a' : 'w',
+    by: cStr(x.by, LIM.who), at: cInt(x.at, 0, 9e15), st: x.st === 'w' || x.st === 'r' ? x.st : '', pr: pr,
+    ob: cStr(x.ob, LIM.ob), sb: cStr(x.sb, LIM.who), sa: cInt(x.sa, 0, 9e15) };
+}
+
+function cleanShelves(l){
+  var seen = {};
+  return (Array.isArray(l) ? l : []).map(Number).filter(function(v){ if (!(v >= 1 && v <= 999 && Math.floor(v) === v) || seen[v]) return false; seen[v] = 1; return true; }).sort(function(x, y){ return x - y; });
+}
+
+function cleanHist(e){
+  e = e && typeof e === 'object' ? e : {};
+  var ts = e.ts && typeof e.ts.toMillis === 'function' ? e.ts.toMillis() : 0;
+  return { t: ts || cInt(e.t, 0, 9e15), q: cStr(e.q, LIM.who) || 'Sem nome', a: cStr(e.a, 8), id: cStr(e.id, 40), m: cStr(e.m, LIM.m), d: cStr(e.d, LIM.d), x: cStr(e.x, LIM.x) };
+}
+
+function index(){ D.forEach(function(m, i){ m.i = i; m.k = norm(m.d); if (!m.id) m.id = m.n.length ? 'm' + m.n[0] : 'x' + i; }); }
+
+function renum(){
+  var g = {};
+  D.forEach(function(m){ if (!m.s){ m.a = ''; m.p = 0; return; } (g[m.s + m.a] = g[m.s + m.a] || []).push(m); });
+  Object.keys(g).forEach(function(k){ g[k].sort(function(x, y){ return x.p - y.p; }).forEach(function(m, i){ m.p = i + 1; }); });
+}
+
+function inShelf(s){ return D.filter(function(m){ return m.s === s; }); }
+
+function order(){ return SH.concat([LOOSE]); }
+
+/* ---- estado de manutenção ----
+   st: '' (pronta), 'w' (com atenção), 'r' (não usar); pr: problemas; ob: observação; sb/sa: quem e quando. */
+var PR = { v: 'Ventosa rasgada', f: 'Peça faltando', o: 'Outro' };
+
+/* nomes antigos, só para mostrar avisos já salvos */
+var PR_OLD = { m: 'Mangueira dobrada', c: 'Conector vazando', p: 'Parafuso solto', s: 'Sensor ou cabo' };
+
+var PARTS = { v: 'Ventosa', sv: 'Suporte para ventosa', pi: 'Pinça', g: 'Gerador de vácuo', pt: 'Pistão', o: 'Outra peça' };
+
+function stTitle(m){ return m.st === 'r' ? 'Não usar · precisa de reparo' : 'Atenção · precisa de reparo'; }
+
+function prNames(m){ return (m.pr || []).filter(function(k){ return k !== 'o' || !userNote(m.ob); }).map(function(k){ return PR[k] || PR_OLD[k]; }).filter(Boolean); }
+
+/* observação = texto da pessoa + notas automáticas de peça emprestada */
+var AUTO = /[^.]*usadas? (?:na|para consertar a) garra [^.]*\./g;
+
+function autoNotes(ob){ return ((ob || '').match(AUTO) || []).map(function(x){ return x.trim(); }); }
+
+function userNote(ob){ return (ob || '').replace(AUTO, '').replace(/\s+/g, ' ').trim(); }
+
+function byId(id){ for (var i = 0; i < D.length; i++) if (D[i].id === id) return D[i]; return null; }
+
+function byNum(v){ v = +v; return D.filter(function(x){ return x.n.indexOf(v) !== -1; })[0] || null; }
+
+/* ---- gravar o estado de manutenção com segurança ----
+   Na nuvem e com internet, uma transação lê a garra no servidor e só grava se o aviso ainda for o mesmo
+   que estava na tela quando o formulário abriu. Na garra doadora, a nota é acrescentada à que está no
+   servidor, não à que este celular viu. Sem internet, grava normalmente quando a conexão voltar. */
+var STF = ['st', 'pr', 'ob', 'sb', 'sa', 'by', 'at'];
+
+function stFields(m){ var f = fields(m), o = {}; STF.forEach(function(k){ o[k] = f[k]; }); return o; }
+
+function hm(d){ return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
+function dayKey(d){ return d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate(); }
+
+function dayName(t){
+  var d = new Date(t), n = new Date(), y = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
+  if (dayKey(d) === dayKey(n)) return 'Hoje';
+  if (dayKey(d) === dayKey(y)) return 'Ontem';
+  return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + (d.getFullYear() !== n.getFullYear() ? '/' + d.getFullYear() : '');
+}
+
+function when(t){ var n = dayName(t); return (n === 'Hoje' || n === 'Ontem' ? n.toLowerCase() : n) + ', ' + hm(new Date(t)); }
+
+var FIELDS = ['n', 'd', 's', 'a', 'p', 't', 'by', 'at', 'st', 'pr', 'ob', 'sb', 'sa'];
+
+function fields(m){ var c = clean(m, m.id), o = {}; FIELDS.forEach(function(k){ o[k] = c[k]; }); return o; }
+
+function sig(m){ return JSON.stringify([m.n, m.d, m.s, m.a, m.p, m.t, m.st || '', m.pr || [], m.ob || '', m.sb || '', m.sa || 0]); }
+
+/* GAVETA DADOS: memória do celular e sincronização com o Firebase. */
+
+var BASE = /*DATA*/[];
+
+var FB = {"apiKey":"AIzaSyBkows79dBE8M-k3n6AMeROIsXmrmcjfjM","authDomain":"armazenamento-de-garras.firebaseapp.com","projectId":"armazenamento-de-garras","storageBucket":"armazenamento-de-garras.firebasestorage.app","messagingSenderId":"262555537859","appId":"1:262555537859:web:fd4166f775e2cea599ed76"}, EMAIL = 'equipe@armazenamento-de-garras.firebaseapp.com';
+
+var CLOUD = !!(FB && window.firebase), auth = null, db = null, ready = false, pending = false, fromCache = true;
+
+var KEY = 'mascaras-dados-v1', HKEY = 'mascaras-hist-v1', D = [], SH = [], edited = false, NAME = '';
+
+try { NAME = localStorage.getItem('mascaras-nome') || ''; } catch (e) {}
+
 SH = seq(12);
+
+function load(){
+  edited = false;
+  if (CLOUD){ D = []; SH = seq(12); return; }
+  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && Array.isArray(st.items) && st.items.length){ D = st.items.map(function(x){ return clean(x); }); SH = Array.isArray(st.shelves) ? cleanShelves(st.shelves) : seq(cInt(st.shelves, 1, 999) || 12); if (!SH.length) SH = seq(12); edited = true; return; } } catch (e) {}
+  D = BASE.map(function(x){ return clean(x); }); SH = seq(12);
+}
+
+function save(){
+  if (CLOUD){ push(); return; }
+  edited = true;
+  try { localStorage.setItem(KEY, JSON.stringify({ shelves: SH, items: D.map(function(m){ return { id: m.id, n: m.n, d: m.d, s: m.s, a: m.a, p: m.p, t: m.t, by: m.by || '', at: m.at || 0, st: m.st || '', pr: m.pr || [], ob: m.ob || '', sb: m.sb || '', sa: m.sa || 0 }; }) })); } catch (e) {}
+}
+
+function statusSave(list, ok){
+  if (!CLOUD || !db || !db.runTransaction || !navigator.onLine){ save(); ok(); return; }
+  var prev = {}, col = db.collection('mascaras');
+  list.forEach(function(it){ prev[it.m.id] = remote[it.m.id]; remote[it.m.id] = fields(it.m); });
+  save();
+  db.runTransaction(function(tx){
+    return Promise.all(list.map(function(it){ return tx.get(col.doc(it.m.id)); })).then(function(docs){
+      docs.forEach(function(d, i){
+        var it = list[i], w = stFields(it.m);
+        if (!d.exists) throw { code: 'sumiu', id: it.m.id };
+        var cur = clean(d.data(), it.m.id);
+        if (it.note){ w.ob = (cur.ob ? cur.ob + ' ' + it.note : it.note).slice(-LIM.ob); w.pr = cur.pr.filter(function(k){ return k !== 'f'; }).concat(['f']); }
+        else if (cur.sa !== it.base) throw { code: 'conflito', id: it.m.id };
+        tx.set(col.doc(it.m.id), w, { merge: true });
+      });
+    });
+  }).then(ok, function(er){
+    if (er && (er.code === 'conflito' || er.code === 'sumiu')){
+      /* volta este celular para o que está no servidor */
+      Promise.all(list.map(function(it){ return col.doc(it.m.id).get(); })).then(function(ds){
+        ds.forEach(function(d, i){
+          var id = list[i].m.id, m = byId(id);
+          if (d.exists && m){ Object.assign(m, clean(d.data(), id)); remote[id] = fields(m); }
+        });
+        refresh();
+        conflito(er.id, er.code === 'sumiu' ? 'Esta garra foi removida em outro celular.' : 'Outro celular mudou o aviso desta garra agora. Confira e tente de novo.');
+      });
+    } else {
+      /* falha de conexão no meio: grava pelo caminho normal, que espera a internet voltar */
+      list.forEach(function(it){ remote[it.m.id] = prev[it.m.id]; });
+      push(); ok();
+    }
+  });
+}
+
+function log(a, m, x, title){
+  var e = cleanHist({ t: Date.now(), q: NAME || 'Sem nome', a: a, id: m ? m.id : '', m: m ? label(m) : (title || ''), d: m ? m.d : '', x: x || '' });
+  if (m && a !== 'del'){ m.by = e.q; m.at = e.t; }
+  /* na nuvem, a hora que vale é a do servidor (ts); a do celular (t) serve só enquanto a nuvem não responde */
+  if (CLOUD){ if (db){ var fv = firebase.firestore.FieldValue, doc = Object.assign({}, e); if (fv) doc.ts = fv.serverTimestamp(); db.collection('historico').add(doc).catch(cloudErr); } return; }
+  try { var h = JSON.parse(localStorage.getItem(HKEY)) || []; h.unshift(e); localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 300))); } catch (er) {}
+}
+
+/* sincronização entre os celulares (Firebase) */
+var unsub = [], got = { m: false, c: false }, remote = {}, remoteList = seq(12), lastSig = '', cfgList = false;
+
+function applyShelves(){ var set = {}; remoteList.forEach(function(k){ set[k] = 1; }); D.forEach(function(m){ if (m.s) set[m.s] = 1; }); SH = Object.keys(set).map(Number).sort(function(x, y){ return x - y; }); if (current && SH.indexOf(current) < 0) current = SH[0] || 0; }
+
+function setReady(){ ready = got.m && got.c; document.body.classList.toggle('wait', !ready); }
+
+function cloudErr(e){
+  var c = e && e.code || '';
+  $('note').textContent = c === 'permission-denied' ? 'Sem permissão para acessar a lista. Confira as regras do Firebase.' : 'Erro de sincronização' + (c ? ' (' + c + ').' : '.');
+}
+
+function listen(){
+  if (unsub.length) return;
+  unsub.push(db.collection('mascaras').onSnapshot({ includeMetadataChanges: true }, function(snap){
+    pending = snap.metadata.hasPendingWrites; fromCache = snap.metadata.fromCache;
+    var list = [], rem = {};
+    snap.forEach(function(doc){
+      var m = clean(doc.data(), doc.id);
+      list.push(m); rem[m.id] = fields(m);
+    });
+    list.sort(function(x, y){ return (x.n[0] || 99999) - (y.n[0] || 99999) || (x.id < y.id ? -1 : 1); });
+    var sg = list.map(function(m){ return m.id + JSON.stringify(rem[m.id]); }).join('|') + '#' + fromCache;
+    var first = !got.m; got.m = true; setReady();
+    if (sg === lastSig && !first){ updateSub(); return; }
+    lastSig = sg;
+    var selId = selected && selected.id, edId = editing && editing.id, by = {};
+    D = list; remote = rem; index(); applyShelves();
+    D.forEach(function(m){ by[m.id] = m; });
+    if (edId){ if (by[edId]) editing = by[edId]; else closeForm(); }
+    if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } }
+    renderShelves(); renderBoard(); search(); foot();
+  }, cloudErr));
+  unsub.push(db.collection('config').doc('geral').onSnapshot(function(d){
+    var x = d.exists ? d.data() : {}, l = cleanShelves(x.list); cfgList = l.length > 0; remoteList = l.length ? l : seq(cInt(x.shelves, 1, 999) || 12);
+    got.c = true; setReady(); applyShelves(); renderShelves(); renderBoard(); search();
+  }, cloudErr));
+}
+
+function stopListen(){
+  unsub.forEach(function(f){ f(); }); unsub = []; got = { m: false, c: false }; lastSig = ''; remote = {}; D = [];
+  selected = null; index(); setReady(); renderShelves(); renderBoard();
+}
+
+function push(){
+  if (!ready) return;
+  var ops = [], seen = {}, col = db.collection('mascaras');
+  /* Só os campos que este celular mudou vão para a nuvem (set com merge).
+     Se outro celular mexeu em outro campo da mesma garra, as duas mudanças ficam. */
+  D.forEach(function(m){
+    seen[m.id] = 1;
+    var f = fields(m), old = remote[m.id], ch = {}, any = false;
+    FIELDS.forEach(function(k){ if (!old || JSON.stringify(old[k]) !== JSON.stringify(f[k])){ ch[k] = f[k]; any = true; } });
+    if (any){ ops.push([col.doc(m.id), old ? ch : f]); remote[m.id] = f; }
+  });
+  Object.keys(remote).forEach(function(id){ if (!seen[id]){ ops.push([col.doc(id), null]); delete remote[id]; } });
+  /* prateleiras: acrescentar e tirar com operações atômicas do banco, para não desfazer o que outro celular fez */
+  var add = SH.filter(function(k){ return remoteList.indexOf(k) < 0; }), del = remoteList.filter(function(k){ return SH.indexOf(k) < 0; });
+  if (add.length || del.length){
+    var cref = db.collection('config').doc('geral'), fv = firebase.firestore.FieldValue;
+    if (cfgList && fv && fv.arrayUnion){
+      if (add.length) ops.push([cref, { list: fv.arrayUnion.apply(fv, add) }]);
+      if (del.length) ops.push([cref, { list: fv.arrayRemove.apply(fv, del) }]);
+    } else ops.push([cref, { shelves: maxSh(), list: SH.slice() }]);
+    remoteList = SH.slice();
+  }
+  for (var i = 0; i < ops.length; i += 400){
+    var b = db.batch();
+    ops.slice(i, i + 400).forEach(function(o){ if (o[1]) b.set(o[0], o[1], { merge: true }); else b.delete(o[0]); });
+    b.commit().catch(function(er){ cloudErr(er); toast('Não foi possível salvar na nuvem.'); });
+  }
+}
+
+function importSeed(e){
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var arr = JSON.parse(r.result);
+      if (!Array.isArray(arr) || !arr.length || !Array.isArray(arr[0].n)) throw 0;
+      if (arr.length > 2000) throw 0;
+      D = arr.map(function(x){ return clean(x); }).filter(function(m){ return m.id; });
+      index(); applyShelves(); log('imp', null, plural(D.length), 'Lista inicial'); push(); renderShelves(); renderBoard();
+    } catch (er) { $('note').textContent = 'Esse arquivo não é a lista inicial (dados-iniciais.json).'; }
+  };
+  r.readAsText(f);
+}
+
+function startCloud(){
+  document.body.classList.add('wait');
+  try {
+    firebase.initializeApp(FB); auth = firebase.auth(); db = firebase.firestore();
+    db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
+    auth.onAuthStateChanged(function(u){
+      var lg = $('login');
+      if (u){ lg.classList.remove('open'); lg.setAttribute('aria-hidden', 'true'); $('lp').value = ''; listen(); if (!NAME) openWho(); }
+      else { stopListen(); lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); }
+      foot();
+    });
+  } catch (er) { $('note').textContent = 'Não foi possível iniciar a sincronização.'; }
+}
+
+/* GAVETA TELA: o que o operador vê e toca. */
+
 var REDUCE = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
 /* troca de texto no lugar: sai para cima, entra de baixo (150 ms) */
 function swapText(el, t){
   var cur = el._sw ? el._next : el.textContent;
@@ -489,51 +767,40 @@ function swapText(el, t){
     void el.offsetWidth; el.classList.remove('is-enter');
   }, 150);
 }
+
 var toastT = 0;
+
 function toast(msg){
   var t = $('toast'); t.textContent = msg; t.classList.add('is-open');
   clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('is-open'); }, 2600);
 }
+
 /* erro: o grupo treme e a mensagem aparece junto dele */
 function fail(err, group, msg){
   err.textContent = msg; err.classList.remove('show'); group.classList.remove('shake'); void group.offsetWidth;
   err.classList.add('show'); group.classList.add('shake'); group.classList.add('bad');
 }
+
 function clearErr(err, group){ err.textContent = ''; group.classList.remove('bad'); group.classList.remove('shake'); }
+
 function celebrate(then, green){
   if (REDUCE){ then(); return; }
   var c = $('okc'); c.classList.toggle('g', !!green); c.setAttribute('data-state', 'out'); void c.offsetWidth; c.setAttribute('data-state', 'in');
   setTimeout(function(){ c.setAttribute('data-state', 'bye'); then(); }, 650);
 }
+
 var LOOSE = 0, current = 1, selected = null, query = '';
+
 var $ = function(id){ return document.getElementById(id); };
+
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-function norm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
-function label(m){ return m.n.length ? m.n.join(' / ') : 'Sem número'; }
-function where(m){ return m.s ? 'P' + m.s + ' · ' + m.a : 'Sem lugar'; }
-function load(){
-  edited = false;
-  if (CLOUD){ D = []; SH = seq(12); return; }
-  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && st.items && st.items.length){ D = st.items; SH = Array.isArray(st.shelves) ? st.shelves : seq(st.shelves || 12); edited = true; return; } } catch (e) {}
-  D = JSON.parse(JSON.stringify(BASE)); SH = seq(12);
-}
-function save(){
-  if (CLOUD){ push(); return; }
-  edited = true;
-  try { localStorage.setItem(KEY, JSON.stringify({ shelves: SH, items: D.map(function(m){ return { id: m.id, n: m.n, d: m.d, s: m.s, a: m.a, p: m.p, t: m.t, by: m.by || '', at: m.at || 0, st: m.st || '', pr: m.pr || [], ob: m.ob || '', sb: m.sb || '', sa: m.sa || 0 }; }) })); } catch (e) {}
-}
-function index(){ D.forEach(function(m, i){ m.i = i; m.k = norm(m.d); if (!m.id) m.id = m.n.length ? 'm' + m.n[0] : 'x' + i; }); }
-function renum(){
-  var g = {};
-  D.forEach(function(m){ if (!m.s){ m.a = ''; m.p = 0; return; } (g[m.s + m.a] = g[m.s + m.a] || []).push(m); });
-  Object.keys(g).forEach(function(k){ g[k].sort(function(x, y){ return x.p - y.p; }).forEach(function(m, i){ m.p = i + 1; }); });
-}
+
 load(); index();
-function inShelf(s){ return D.filter(function(m){ return m.s === s; }); }
 
 try { var saved = +localStorage.getItem('prateleira'); if ((saved === 0 || SH.indexOf(saved) !== -1) && localStorage.getItem('prateleira') !== null) current = saved; } catch (e) {}
 
 var netState = '';
+
 function updateSub(){
   var t = plural(D.length) + ' · ' + SH.length + (SH.length === 1 ? ' prateleira' : ' prateleiras');
   if (CLOUD){
@@ -551,6 +818,7 @@ function updateSub(){
 }
 
 var navKey = '';
+
 function movePill(animate){
   var nav = $('shelves'), pill = nav.querySelector('.pill2'), act = nav.querySelector('[aria-pressed="true"]');
   if (!pill) return;
@@ -560,6 +828,7 @@ function movePill(animate){
   pill.style.width = act.offsetWidth + 'px'; tx(pill, act.offsetLeft);
   if (snap){ void pill.offsetWidth; pill.style.transition = ''; }
 }
+
 function renderShelves(){
   var nav = $('shelves'), list = SH.concat([LOOSE]), key = list.join(), fresh = key !== navKey;
   updateSub();
@@ -595,6 +864,7 @@ function renderShelves(){
   var act = nav.querySelector('[aria-pressed="true"]');
   if (act){ var to = Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2); if (nav.scrollTo && !fresh) nav.scrollTo({ left: to, behavior: 'smooth' }); else nav.scrollLeft = to; }
 }
+
 window.addEventListener('resize', function(){ movePill(false); });
 
 function plateHtml(m, n){
@@ -602,6 +872,7 @@ function plateHtml(m, n){
   return '<button type="button" class="plate ' + m.t + (m.st ? ' st-' + m.st : '') + '" data-i="' + m.i + '" aria-label="Garra ' + esc(label(m)) + ', ' + esc(m.d) + ', andar ' + m.a + ', posição ' + m.p + (m.st ? ', ' + stTitle(m).toLowerCase() : '') + '">' +
     flagHtml(m) + '<span class="tube"></span><span class="body"><i class="cup"></i><i class="cup"></i><i class="cup"></i><i class="cup"></i>' + pills + '</span></button>';
 }
+
 function hitHtml(m){
   return '<button type="button" class="hit" data-i="' + m.i + '"><strong>' + esc(m.n.length ? m.n.join('/') : 'S/N') + '</strong><span class="d">' + esc(m.d.toLowerCase()) + '</span><span class="w' + (m.st ? ' st-' + m.st : '') + '">' + (m.st ? '<i class="mini ' + m.st + '" aria-label="' + stTitle(m) + '">!</i>' : '') + where(m) + '</span></button>';
 }
@@ -617,14 +888,18 @@ function paneData(s){
   if (!items.length) html = '<p class="hint">Sem garras ainda. Toque em + para adicionar a primeira.</p>';
   return { t: 'Prateleira ' + s, c: plural(items.length), h: html };
 }
+
 var slideFrom = 0;
+
 var DOTS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+
 function fillPane(el, s){
   el._stale = false;
   if (s === null || s === undefined){ el.innerHTML = ''; return; }
   var p = paneData(s);
   el.innerHTML = '<h2><span class="bt">' + p.t + '</span><span class="meta"><span class="bc">' + p.c + '</span>' + (s ? '<button type="button" class="more" aria-label="Opções desta prateleira">' + DOTS + '</button>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
 }
+
 function renderBoard(){
   var C = PN[1];
   if (CLOUD && (!ready || !D.length)){
@@ -649,6 +924,7 @@ function matches(m){
   if (/^\d+$/.test(query)) return m.n.some(function(x){ return String(x).indexOf(query) === 0; });
   return m.k.indexOf(query) !== -1;
 }
+
 function mark(r){
   r = r || $('rows'); if (!r) return;
   r.classList.toggle('dim', !!query || !!selected);
@@ -658,6 +934,7 @@ function mark(r){
     el.classList.toggle('sel', selected === m);
   });
 }
+
 function search(){
   var hits = $('hits'), note = $('note');
   hits.innerHTML = ''; note.textContent = '';
@@ -675,7 +952,6 @@ function search(){
   else mark();
 }
 
-function order(){ return SH.concat([LOOSE]); }
 function show(s, quiet){
   finishAnim();
   var o = order(), di = o.indexOf(s) - o.indexOf(current);
@@ -691,6 +967,7 @@ function show(s, quiet){
   try { localStorage.setItem('prateleira', s); } catch (e) {}
   renderShelves(); renderBoard();
 }
+
 function open(m){
   if (m.s !== current){ finishAnim(); current = m.s; renderShelves(); renderBoard(); }
   selected = m;
@@ -716,6 +993,7 @@ function open(m){
   var el = $('rows').querySelector('.plate[data-i="' + m.i + '"]');
   if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
 function closeSheets(){
   selected = null;
   ['sheet', 'menu', 'ask'].forEach(function(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden', 'true'); });
@@ -729,14 +1007,18 @@ document.addEventListener('click', function(e){
   if (t.classList.contains('hit')) $('q').blur();
   open(D[+t.dataset.i]);
 });
+
 var q = $('q'), field = $('field');
+
 q.addEventListener('input', function(){
   query = norm(q.value.trim());
   field.classList.toggle('has', !!q.value);
   if (selected) closeSheets();
   search();
 });
+
 $('clear').addEventListener('click', function(){ q.value = ''; query = ''; field.classList.remove('has'); search(); q.focus(); });
+
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSheets(); });
 
 /* ---- carrossel de prateleiras ----
@@ -746,12 +1028,19 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeS
    velocidade do dedo. A troca projeta onde o dedo pararia (desaceleração 0.998, como o iOS).
    Qualquer toque durante a mola agarra o carrossel onde ele está. */
 var board = $('board'), PN = Array.prototype.slice.call(board.querySelectorAll('.pane'));
+
 var GAP = 16, U = 0, X = 0, drag = null, anim = null, peek = null, swipeT = -1e9, rafId = 0, lastH = -1, nbT = 0;
+
 function tx(el, x){ el.style.transform = 'translate3d(' + x + 'px,0,0)'; }
+
 function measure(){ U = board.clientWidth + GAP; }
+
 function place(){ for (var k = 0; k < 3; k++) PN[k].style.transform = 'translate3d(' + ((k - 1) * U + X) + 'px,0,0)'; }
+
 function frame(){ rafId = 0; place(); }
+
 function nb(d){ var o = order(), v = o[o.indexOf(current) + d]; return v === undefined ? null : v; }
+
 function setIds(){
   ['bTitle', 'bCount', 'bMore', 'rows'].forEach(function(id){ var el = document.getElementById(id); if (el) el.removeAttribute('id'); });
   var C = PN[1], a;
@@ -761,11 +1050,13 @@ function setIds(){
   a = C.querySelector('.rows'); if (a) a.id = 'rows';
   PN.forEach(function(el, k){ if (k === 1){ el.removeAttribute('aria-hidden'); el.inert = false; } else { el.setAttribute('aria-hidden', 'true'); el.inert = true; } });
 }
+
 function fit(){
   var h = PN[1].offsetHeight;
   if (peek && peek.firstChild) h = Math.max(h, peek.offsetHeight);
   if (h && h !== lastH){ lastH = h; board.style.height = h + 'px'; }
 }
+
 function fillNeighbors(){
   if (nbT){ clearTimeout(nbT); nbT = 0; }
   for (var k = 0; k < 3; k += 2){
@@ -773,7 +1064,9 @@ function fillNeighbors(){
     if (el._stale){ fillPane(el, nb(k - 1)); var r = el.querySelector('.rows'); if (r) mark(r); }
   }
 }
+
 function scheduleNb(){ if (!nbT) nbT = setTimeout(fillNeighbors, 90); }
+
 function setChip(s){
   var nav = $('shelves');
   Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ b.setAttribute('aria-pressed', +b.dataset.s === s ? 'true' : 'false'); });
@@ -781,6 +1074,7 @@ function setChip(s){
   var act = nav.querySelector('[aria-pressed="true"]');
   if (act && nav.scrollTo) nav.scrollTo({ left: Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2), behavior: 'smooth' });
 }
+
 /* troca de papéis sem redesenhar: o painel que saiu de vista vira o novo vizinho do outro lado */
 function rotate(dir){
   var to = nb(dir); if (to === null) return;
@@ -793,6 +1087,7 @@ function rotate(dir){
   setIds(); place(); closeSheets(); renderShelves();
   scheduleNb();
 }
+
 /* mola amortecida, resolvida em forma fechada a cada quadro */
 function run(a, target, v, z, resp, done){
   if (REDUCE){ X = target; place(); anim = null; done(); return; }
@@ -808,6 +1103,7 @@ function run(a, target, v, z, resp, done){
   }
   a.raf = requestAnimationFrame(f);
 }
+
 function finishAnim(){
   if (drag){ drag = null; board.classList.remove('drag'); }
   if (!anim) return;
@@ -815,7 +1111,9 @@ function finishAnim(){
   if (a.dir) rotate(a.dir);
   X = 0; place(); peek = null; fit();
 }
+
 function rubber(o, dim){ var c = .55; return (o * dim * c) / (dim + c * Math.abs(o)); }
+
 function settle(v, cancel){
   if (!X && !v){ peek = null; fit(); return; }
   var proj = X + v * .499, dir = proj < 0 ? 1 : -1, to = nb(dir);
@@ -826,6 +1124,7 @@ function settle(v, cancel){
   var a = anim = { dir: go ? dir : 0, raf: 0, v: v };
   run(a, go ? -dir * U : 0, v, go ? .86 : 1, go ? .42 : .34, function(){ if (go) rotate(dir); peek = null; fit(); });
 }
+
 board.addEventListener('touchstart', function(e){
   drag = null;
   if (e.touches.length !== 1 || (CLOUD && (!ready || !D.length))) return;
@@ -838,6 +1137,7 @@ board.addEventListener('touchstart', function(e){
   var t = e.touches[0];
   drag = { x: t.clientX, y: t.clientY, base: X, hist: [[e.timeStamp, t.clientX]], lock: false, caught: caught, cv: cv };
 }, { passive: true });
+
 board.addEventListener('touchmove', function(e){
   if (!drag) return;
   var t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y;
@@ -858,6 +1158,7 @@ board.addEventListener('touchmove', function(e){
   while (h.length > 2 && e.timeStamp - h[0][0] > 100) h.shift();
   if (!rafId) rafId = requestAnimationFrame(frame);
 }, { passive: false });
+
 function endDrag(e, cancel){
   var d = drag; drag = null;
   if (!d) return;
@@ -869,14 +1170,20 @@ function endDrag(e, cancel){
   if (n > 1 && e.timeStamp - h[n - 1][0] < 80) v = (h[n - 1][1] - h[0][1]) / Math.max(1, h[n - 1][0] - h[0][0]) * 1000;
   settle(Math.max(-2500, Math.min(2500, v)), cancel);
 }
+
 board.addEventListener('touchend', function(e){ endDrag(e, false); }, { passive: true });
+
 board.addEventListener('touchcancel', function(e){ endDrag(e, true); }, { passive: true });
+
 board.addEventListener('click', function(e){
   var b = e.target.closest ? e.target.closest('.more') : null;
   if (b && PN[1].contains(b) && performance.now() - swipeT > 350) openMenu();
 });
+
 if (window.ResizeObserver){ var ro = new ResizeObserver(function(){ fit(); }); PN.forEach(function(el){ ro.observe(el); }); }
+
 window.addEventListener('resize', function(){ measure(); place(); fit(); });
+
 measure(); place();
 
 /* opções da prateleira: as ações ficam junto do título dela */
@@ -889,7 +1196,9 @@ function openMenu(){
   $('mDel').hidden = SH.length < 2;
   $('menu').classList.add('open'); $('menu').setAttribute('aria-hidden', 'false');
 }
+
 $('mAdd').addEventListener('click', function(){ openForm(null); });
+
 $('mDel').addEventListener('click', function(){
   var s = current, items = inShelf(s), n = items.length;
   ask('Remover a prateleira ' + s + '?', 'Remover', function(){
@@ -903,18 +1212,23 @@ $('mDel').addEventListener('click', function(){
 
 /* confirmação */
 var askFn = null;
+
 function ask(text, go, fn, sub, danger){
   closeSheets();
   $('askText').textContent = text; $('askSub').textContent = sub || ''; $('askGo').textContent = go; askFn = fn;
   $('askGo').style.background = danger ? '#e5484d' : '';
   $('ask').classList.add('open'); $('ask').setAttribute('aria-hidden', 'false');
 }
+
 $('askGo').addEventListener('click', function(){ var f = askFn; askFn = null; closeSheets(); if (f) f(); });
+
 function foot(){ $('whoBtn').textContent = NAME ? 'Neste celular: ' + NAME : 'Definir meu nome'; $('localNote').hidden = CLOUD || !edited; $('resetBtn').hidden = CLOUD || !edited; $('outBtn').hidden = !(CLOUD && auth && auth.currentUser); }
+
 function refresh(){ index(); renderShelves(); renderBoard(); search(); foot(); }
 
 /* cadastro e edição */
 var editing = null, fS = $('fS'), fA = $('fA'), fP = $('fP');
+
 function fillPos(){
   var s = +fS.value, a = fA.value;
   fA.disabled = fP.disabled = !s;
@@ -924,6 +1238,7 @@ function fillPos(){
   fP.innerHTML = h;
   fP.value = editing && editing.s === s && editing.a === a ? editing.p : n;
 }
+
 function openForm(m){
   closeSheets(); editing = m || null;
   $('fTitle').textContent = m ? 'Editar garra' : 'Nova garra';
@@ -938,12 +1253,18 @@ function openForm(m){
   fillPos();
   $('form').classList.add('open'); $('form').setAttribute('aria-hidden', 'false'); $('form').scrollTop = 0;
 }
+
 function closeForm(){ $('form').classList.remove('open'); $('form').setAttribute('aria-hidden', 'true'); editing = null; if (document.activeElement) document.activeElement.blur(); }
+
 fS.addEventListener('change', fillPos); fA.addEventListener('change', fillPos);
+
 $('fCancel').addEventListener('click', closeForm);
+
 $('f').addEventListener('input', function(){ clearErr($('fErr'), $('g1')); });
+
 $('f').addEventListener('submit', function(e){
   e.preventDefault();
+  if (!$('form').classList.contains('open')) return;
   var raw1 = $('fN1').value.trim(), raw2 = $('fN2').value.trim(), d = $('fD').value.trim().toUpperCase(), err = '';
   var n1 = raw1 ? parseInt(raw1, 10) : 0, n2 = raw2 ? parseInt(raw2, 10) : 0;
   if ((raw1 && !/^\d+$/.test(raw1)) || (raw2 && !/^\d+$/.test(raw2))) err = 'O número do molde deve ter só algarismos.';
@@ -955,7 +1276,9 @@ $('f').addEventListener('submit', function(e){
     if (dup && !err) err = 'O molde ' + v + ' já está cadastrado (' + where(dup) + ').';
   });
   if (err){ fail($('fErr'), $('g1'), err); $('form').scrollTop = 0; return; }
-  var m = editing || { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+  /* chave única: dois celulares criando a mesma garra ao mesmo tempo gravam no mesmo documento */
+  var key = n1 ? 'm' + n1 : '';
+  var m = editing || { id: key && !byId(key) ? key : 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
   var was = editing ? { n: label(m), d: m.d, w: where(m), p: m.p, t: m.t } : null;
   if (!editing) D.push(m);
   m.n = [n1, n2].filter(Boolean); m.d = d; m.t = $('fT').value;
@@ -977,12 +1300,16 @@ $('f').addEventListener('submit', function(e){
   var sid = m.id;
   celebrate(function(){ var x = D.filter(function(k){ return k.id === sid; })[0]; if (x) open(x); });
 });
+
 $('add').addEventListener('click', function(){ openForm(null); });
+
 $('sEdit').addEventListener('click', function(){ if (selected) openForm(selected); });
+
 $('sDel').addEventListener('click', function(){
   var m = selected; if (!m) return;
   ask('Remover a garra ' + label(m) + ' da lista?', 'Remover', function(){ D.splice(D.indexOf(m), 1); renum(); log('del', m, where(m)); save(); refresh(); toast('Garra ' + label(m) + ' removida'); }, '', true);
 });
+
 $('resetBtn').addEventListener('click', function(){
   ask('Restaurar a lista original? As alterações feitas neste celular serão apagadas.', 'Restaurar', function(){
     try { localStorage.removeItem(KEY); localStorage.removeItem(HKEY); } catch (e) {}
@@ -990,32 +1317,23 @@ $('resetBtn').addEventListener('click', function(){
   });
 });
 
-/* ---- estado de manutenção ----
-   st: '' (pronta), 'w' (com atenção), 'r' (não usar); pr: problemas; ob: observação; sb/sa: quem e quando. */
-var PR = { v: 'Ventosa rasgada', f: 'Peça faltando', o: 'Outro' };
-/* nomes antigos, só para mostrar avisos já salvos */
-var PR_OLD = { m: 'Mangueira dobrada', c: 'Conector vazando', p: 'Parafuso solto', s: 'Sensor ou cabo' };
-var PARTS = { v: 'Ventosa', sv: 'Suporte para ventosa', pi: 'Pinça', g: 'Gerador de vácuo', pt: 'Pistão', o: 'Outra peça' };
 var IC = '<span class="ic" aria-hidden="true"><svg class="i-plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><svg class="i-ok" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span>';
-function stTitle(m){ return m.st === 'r' ? 'Não usar · precisa de reparo' : 'Atenção · precisa de reparo'; }
-function prNames(m){ return (m.pr || []).filter(function(k){ return k !== 'o' || !userNote(m.ob); }).map(function(k){ return PR[k] || PR_OLD[k]; }).filter(Boolean); }
-/* observação = texto da pessoa + notas automáticas de peça emprestada */
-var AUTO = /[^.]*usadas? (?:na|para consertar a) garra [^.]*\./g;
-function autoNotes(ob){ return ((ob || '').match(AUTO) || []).map(function(x){ return x.trim(); }); }
-function userNote(ob){ return (ob || '').replace(AUTO, '').replace(/\s+/g, ' ').trim(); }
+
 function flagHtml(m){
   if (!m.st) return '';
   var age = Date.now() - (m.sa || 0), fresh = age >= 0 && age < 500;
   return '<i class="flag ' + m.st + (fresh ? ' pop" style="animation-delay:-' + age + 'ms' : '') + '" aria-hidden="true">!</i>';
 }
+
 function statusHtml(m){
   var p = prNames(m);
   return '<h4><i class="mini ' + m.st + '" aria-hidden="true">!</i>' + stTitle(m) + '</h4>' +
     (p.length ? '<ul>' + p.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>' : '') +
     (m.ob ? '<p>' + esc(m.ob) + '</p>' : '');
 }
-function byNum(v){ v = +v; return D.filter(function(x){ return x.n.indexOf(v) !== -1; })[0] || null; }
+
 function openModal(id){ var e = $(id); e.classList.add('open'); e.setAttribute('aria-hidden', 'false'); e.scrollTop = 0; }
+
 function closeModal(id){ var e = $(id); e.classList.remove('open'); e.setAttribute('aria-hidden', 'true'); if (document.activeElement) document.activeElement.blur(); }
 
 /* aviso no topo: quantas garras precisam de reparo */
@@ -1030,6 +1348,7 @@ function updateAlert(){
   else swapText($('alertTxt'), t);
   if ($('alerts').classList.contains('open')) drawAlerts();
 }
+
 function drawAlerts(){
   var l = D.filter(function(m){ return m.st; }).sort(function(x, y){ return (x.st === y.st ? 0 : x.st === 'r' ? -1 : 1) || (y.sa || 0) - (x.sa || 0); });
   var html = '';
@@ -1044,25 +1363,31 @@ function drawAlerts(){
   });
   $('aList').innerHTML = html || '<p class="hempty">Nenhuma garra com problema.<br>Tudo pronto para uso.</p>';
 }
+
 $('alertBtn').addEventListener('click', function(){ closeSheets(); drawAlerts(); openModal('alerts'); });
+
 $('aClose').addEventListener('click', function(){ closeModal('alerts'); });
+
 $('aList').addEventListener('click', function(e){
   var b = e.target.closest('[data-a]'); if (!b) return;
   closeModal('alerts'); open(D[+b.dataset.a]);
 });
 
 /* reportar problema: checklist rápido */
-var rFor = null, rSel = {}, rSevSet = false;
+var rFor = null, rSel = {}, rSevSet = false, rBase = 0;
+
 function pickHtml(map, sel){
   return Object.keys(map).map(function(k){ return '<button type="button" data-k="' + k + '" aria-pressed="' + (sel[k] ? 'true' : 'false') + '">' + IC + map[k] + '</button>'; }).join('');
 }
+
 function setSev(v){
   $('rSev').dataset.v = v;
   Array.prototype.forEach.call($('rSev').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'); });
   swapText($('rSevHelp'), v === 'r' ? 'Não coloque no robô até ser consertada.' : 'Dá para usar, mas precisa de reparo logo.');
 }
+
 function openRep(m, pre){
-  closeSheets(); rFor = m; rSel = {}; rSevSet = !!m.st;
+  closeSheets(); rFor = m; rBase = m.sa || 0; rSel = {}; rSevSet = !!m.st;
   var note = userNote(m.ob), old = [];
   (m.pr || []).forEach(function(k){ if (PR[k]) rSel[k] = 1; else if (PR_OLD[k]) old.push(PR_OLD[k]); });
   if (old.length){ rSel.o = 1; if (!note) note = old.join(', '); }
@@ -1076,6 +1401,7 @@ function openRep(m, pre){
   openModal('rep');
   if (pre === 'o') $('rOb').focus({ preventScroll: true });
 }
+
 $('rPick').addEventListener('click', function(e){
   var b = e.target.closest('[data-k]'); if (!b) return;
   var k = b.dataset.k, on = !rSel[k];
@@ -1085,13 +1411,22 @@ $('rPick').addEventListener('click', function(e){
   if (k === 'f'){ $('rFrom').classList.toggle('open', on); if (on && !rSevSet) setSev('r'); }
   if (k === 'o'){ $('rOther').classList.toggle('open', on); clearErr($('rErr3'), $('rObG')); if (on) $('rOb').focus({ preventScroll: true }); }
 });
+
 $('rSev').addEventListener('click', function(e){ var b = e.target.closest('[data-v]'); if (b){ rSevSet = true; setSev(b.dataset.v); } });
+
 $('rTo').addEventListener('input', function(){ clearErr($('rErr2'), $('rToG')); });
+
 $('rOb').addEventListener('input', function(){ clearErr($('rErr3'), $('rObG')); });
+
 $('rCancel').addEventListener('click', function(){ closeModal('rep'); });
+
 $('rf').addEventListener('submit', function(e){
   e.preventDefault();
-  var m = rFor; if (!m) return;
+  if (!rFor || !$('rep').classList.contains('open')) return;
+  /* a lista pode ter sido trocada pela nuvem enquanto o formulário estava aberto: usa a garra atual */
+  var m = byId(rFor.id);
+  if (!m){ rFor = null; closeModal('rep'); toast('Esta garra foi removida em outro celular.'); return; }
+  if ((m.sa || 0) !== rBase){ rFor = null; closeModal('rep'); conflito(m.id, 'Outro celular mudou o aviso desta garra agora. Confira e tente de novo.'); return; }
   var keys = Object.keys(PR).filter(function(k){ return rSel[k]; }), typed = $('rOb').value.trim().replace(/\s+/g, ' '), to = $('rTo').value.trim(), dest = null;
   var ob = [rSel.o ? typed : ''].concat(autoNotes(m.ob)).filter(Boolean).join(' ');
   if (!keys.length){ fail($('rErr'), $('rPick'), 'Marque o que aconteceu.'); $('rep').scrollTop = 0; return; }
@@ -1105,18 +1440,27 @@ $('rf').addEventListener('submit', function(e){
     if (ob.indexOf(note) === -1) ob = ob ? ob + ' ' + note : note;
   }
   var sev = $('rSev').dataset.v;
-  m.st = sev; m.pr = keys; m.ob = ob; m.sb = NAME || 'Sem nome'; m.sa = Date.now();
-  log('rep', m, (sev === 'r' ? 'Não usar' : 'Com atenção') + (keys.length ? ' · ' + prNames(m).join(', ').toLowerCase() : '') + (ob ? ' · ' + ob : ''));
-  save(); closeModal('rep'); refresh();
+  m.st = sev; m.pr = keys; m.ob = ob.slice(-LIM.ob); m.sb = m.by = NAME || 'Sem nome'; m.sa = m.at = Date.now();
+  rFor = null; closeModal('rep');
+  statusSave([{ m: m, base: rBase }], function(){
+    log('rep', m, (sev === 'r' ? 'Não usar' : 'Com atenção') + (keys.length ? ' · ' + prNames(m).join(', ').toLowerCase() : '') + (ob ? ' · ' + ob : ''));
+  });
+  refresh();
   var id = m.id;
   setTimeout(function(){ var x = D.filter(function(k){ return k.id === id; })[0]; if (x) open(x); }, 200);
   toast('Aviso salvo. O próximo turno vai ver.');
 });
 
+function conflito(id, msg){
+  var m = byId(id); toast(msg);
+  if (m) setTimeout(function(){ open(m); }, 250);
+}
+
 /* conserto, com a garra de onde a peça saiu */
-var xFor = null, xSel = {};
+var xFor = null, xSel = {}, xBase = 0;
+
 function openFix(m){
-  closeSheets(); xFor = m; xSel = {};
+  closeSheets(); xFor = m; xBase = m.sa || 0; xSel = {};
   $('xNum').textContent = label(m); $('xNum').className = 'big' + (m.n.length ? '' : ' sn'); $('xDesc').textContent = m.d.toLowerCase();
   $('xStat').className = 'stc ' + m.st; $('xStat').innerHTML = statusHtml(m);
   $('xUse').checked = false; $('xMore').classList.remove('open'); $('xFrom').value = '';
@@ -1124,7 +1468,9 @@ function openFix(m){
   $('xOther').classList.remove('open'); $('xOb').value = ''; clearErr($('xErr2'), $('xOG'));
   openModal('fix');
 }
+
 $('xUse').addEventListener('change', function(){ $('xMore').classList.toggle('open', this.checked); clearErr($('xErr'), $('xg')); });
+
 $('xPick').addEventListener('click', function(e){
   var b = e.target.closest('[data-k]'); if (!b) return;
   var k = b.dataset.k, on = !xSel[k];
@@ -1132,12 +1478,19 @@ $('xPick').addEventListener('click', function(e){
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   if (k === 'o'){ $('xOther').classList.toggle('open', on); clearErr($('xErr2'), $('xOG')); if (on) $('xOb').focus({ preventScroll: true }); }
 });
+
 $('xOb').addEventListener('input', function(){ clearErr($('xErr2'), $('xOG')); });
+
 $('xFrom').addEventListener('input', function(){ clearErr($('xErr'), $('xg')); });
+
 $('xCancel').addEventListener('click', function(){ closeModal('fix'); });
+
 $('xf').addEventListener('submit', function(e){
   e.preventDefault();
-  var m = xFor; if (!m) return;
+  if (!xFor || !$('fix').classList.contains('open')) return;
+  var m = byId(xFor.id);
+  if (!m){ xFor = null; closeModal('fix'); toast('Esta garra foi removida em outro celular.'); return; }
+  if ((m.sa || 0) !== xBase){ xFor = null; closeModal('fix'); conflito(m.id, 'Outro celular mudou o aviso desta garra agora. Confira antes de liberar.'); return; }
   var donor = null;
   if ($('xUse').checked){
     var v = $('xFrom').value.trim();
@@ -1147,20 +1500,28 @@ $('xf').addEventListener('submit', function(e){
     if (donor === m){ fail($('xErr'), $('xg'), 'É a mesma garra que está sendo consertada.'); return; }
     if (xSel.o && !$('xOb').value.trim()){ fail($('xErr2'), $('xOG'), 'Escreva qual peça foi usada.'); $('xOb').focus({ preventScroll: true }); return; }
   }
-  m.st = ''; m.pr = []; m.ob = ''; m.sb = ''; m.sa = 0;
-  log('fix', m, donor ? 'Peça tirada da garra ' + label(donor) : '');
+  var now = Date.now(), who = NAME || 'Sem nome', jobs = [{ m: m, base: xBase }], note = '';
+  m.st = ''; m.pr = []; m.ob = ''; m.sb = ''; m.sa = 0; m.by = who; m.at = now;
   if (donor){
     var other = $('xOb').value.trim().replace(/\s+/g, ' ').replace(/\.$/, ''), parts = Object.keys(PARTS).filter(function(k){ return xSel[k]; }).map(function(k){ return k === 'o' ? other : PARTS[k]; });
-    var note = (parts.length ? parts.join(', ') : 'Peça') + (parts.length > 1 ? ' usadas' : ' usada') + ' para consertar a garra ' + label(m) + '.';
+    note = (parts.length ? parts.join(', ') : 'Peça') + (parts.length > 1 ? ' usadas' : ' usada') + ' para consertar a garra ' + label(m) + '.';
     donor.st = 'r'; donor.pr = (donor.pr || []).filter(function(k){ return k !== 'f'; }).concat(['f']);
-    donor.ob = donor.ob ? donor.ob + ' ' + note : note; donor.sb = NAME || 'Sem nome'; donor.sa = Date.now();
-    log('take', donor, note);
+    donor.ob = (donor.ob ? donor.ob + ' ' + note : note).slice(-LIM.ob); donor.sb = donor.by = who; donor.sa = donor.at = now;
+    jobs.push({ m: donor, note: note });
   }
-  save(); closeModal('fix'); refresh();
-  celebrate(function(){ toast('Garra ' + label(m) + ' liberada' + (donor ? '. A garra ' + label(donor) + ' ficou como Não usar.' : '.')); }, true);
+  xFor = null; closeModal('fix');
+  statusSave(jobs, function(){
+    log('fix', m, donor ? 'Peça tirada da garra ' + label(donor) : '');
+    if (donor) log('take', donor, note);
+    celebrate(function(){ toast('Garra ' + label(m) + ' liberada' + (donor ? '. A garra ' + label(donor) + ' ficou como Não usar.' : '.')); }, true);
+  });
+  refresh();
 });
+
 $('sQPick').innerHTML = Object.keys(PR).map(function(k){ return '<button type="button" data-k="' + k + '">' + PR[k] + '</button>'; }).join('');
+
 $('sQPick').addEventListener('click', function(e){ var b = e.target.closest('[data-k]'); if (b && selected) openRep(selected, b.dataset.k); });
+
 $('sStat').addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b || !selected) return;
   if (b.id === 'sFix') openFix(selected); else if (b.id === 'sRepE') openRep(selected);
@@ -1168,23 +1529,11 @@ $('sStat').addEventListener('click', function(e){
 
 /* histórico: quem fez o quê e quando */
 var VERB = { rep: 'reportou problema na garra', fix: 'marcou como consertada a garra', take: 'marcou peça faltando na garra', add: 'adicionou a garra', edit: 'alterou a garra', del: 'removeu a garra', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
-function log(a, m, x, title){
-  var e = { t: Date.now(), q: NAME || 'Sem nome', a: a, id: m ? m.id : '', m: m ? label(m) : (title || ''), d: m ? m.d : '', x: x || '' };
-  if (m && a !== 'del'){ m.by = e.q; m.at = e.t; }
-  if (CLOUD){ if (db) db.collection('historico').add(e).catch(cloudErr); return; }
-  try { var h = JSON.parse(localStorage.getItem(HKEY)) || []; h.unshift(e); localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 300))); } catch (er) {}
-}
-function hm(d){ return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
-function dayKey(d){ return d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate(); }
-function dayName(t){
-  var d = new Date(t), n = new Date(), y = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
-  if (dayKey(d) === dayKey(n)) return 'Hoje';
-  if (dayKey(d) === dayKey(y)) return 'Ontem';
-  return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + (d.getFullYear() !== n.getFullYear() ? '/' + d.getFullYear() : '');
-}
-function when(t){ var n = dayName(t); return (n === 'Hoje' || n === 'Ontem' ? n.toLowerCase() : n) + ', ' + hm(new Date(t)); }
+
 function hue(q){ var h = 0; for (var i = 0; i < q.length; i++) h = (h * 31 + q.charCodeAt(i)) % 360; return h; }
+
 var hUnsub = null, hFilter = null;
+
 function drawHist(list){
   var html = '', day = '';
   list.sort(function(x, y){ return y.t - x.t; });
@@ -1196,29 +1545,38 @@ function drawHist(list){
   });
   $('hList').innerHTML = list.length ? html + '</div>' : '<p class="hempty">' + (hFilter ? 'Nenhuma alteração registrada para esta garra.' : 'Nada registrado ainda.<br>As alterações feitas a partir de agora aparecem aqui, com o nome de quem fez.') + '</p>';
 }
+
 function loadHist(){
   if (hUnsub){ hUnsub(); hUnsub = null; }
   var fb = $('hFil'); fb.hidden = !hFilter;
   if (hFilter) fb.textContent = 'Garra ' + hFilter.label + '  ×';
   if (!CLOUD){
-    var h = []; try { h = JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) {}
+    var h = []; try { h = (JSON.parse(localStorage.getItem(HKEY)) || []).map(cleanHist); } catch (e) {}
     drawHist(hFilter ? h.filter(function(e){ return e.id === hFilter.id; }) : h); return;
   }
   $('hList').innerHTML = '<p class="hempty">Carregando…</p>';
   var col = db.collection('historico'), qy = hFilter ? col.where('id', '==', hFilter.id) : col.orderBy('t', 'desc').limit(200);
-  hUnsub = qy.onSnapshot(function(snap){ var l = []; snap.forEach(function(d){ l.push(d.data()); }); drawHist(l); }, function(er){ cloudErr(er); $('hList').innerHTML = '<p class="hempty">Não foi possível carregar o histórico.</p>'; });
+  hUnsub = qy.onSnapshot(function(snap){ var l = []; snap.forEach(function(d){ l.push(cleanHist(d.data())); }); drawHist(l); }, function(er){ cloudErr(er); $('hList').innerHTML = '<p class="hempty">Não foi possível carregar o histórico.</p>'; });
 }
+
 function openHist(m){
   closeSheets(); hFilter = m ? { id: m.id, label: label(m) } : null;
   $('hist').classList.add('open'); $('hist').setAttribute('aria-hidden', 'false'); $('hist').scrollTop = 0;
   loadHist();
 }
+
 $('histBtn').addEventListener('click', function(){ openHist(null); });
+
 $('sLast').addEventListener('click', function(){ if (selected) openHist(selected); });
+
 $('hFil').addEventListener('click', function(){ hFilter = null; loadHist(); });
+
 $('hClose').addEventListener('click', function(){ if (hUnsub){ hUnsub(); hUnsub = null; } $('hist').classList.remove('open'); $('hist').setAttribute('aria-hidden', 'true'); });
+
 function openWho(){ $('wn').value = NAME; clearErr($('wErr'), $('wg')); $('who').classList.add('open'); $('who').setAttribute('aria-hidden', 'false'); }
+
 $('whoBtn').addEventListener('click', openWho);
+
 $('wf').addEventListener('submit', function(e){
   e.preventDefault();
   var v = $('wn').value.trim().replace(/\s+/g, ' ');
@@ -1227,86 +1585,6 @@ $('wf').addEventListener('submit', function(e){
   $('who').classList.remove('open'); $('who').setAttribute('aria-hidden', 'true'); if (document.activeElement) document.activeElement.blur(); foot();
 });
 
-/* sincronização entre os celulares (Firebase) */
-var unsub = [], got = { m: false, c: false }, remote = {}, remoteList = seq(12), lastSig = '';
-function sig(m){ return JSON.stringify([m.n, m.d, m.s, m.a, m.p, m.t, m.st || '', m.pr || [], m.ob || '', m.sb || '', m.sa || 0]); }
-function applyShelves(){ var set = {}; remoteList.forEach(function(k){ set[k] = 1; }); D.forEach(function(m){ if (m.s) set[m.s] = 1; }); SH = Object.keys(set).map(Number).sort(function(x, y){ return x - y; }); if (current && SH.indexOf(current) < 0) current = SH[0] || 0; }
-function setReady(){ ready = got.m && got.c; document.body.classList.toggle('wait', !ready); }
-function cloudErr(e){
-  var c = e && e.code || '';
-  $('note').textContent = c === 'permission-denied' ? 'Sem permissão para acessar a lista. Confira as regras do Firebase.' : 'Erro de sincronização' + (c ? ' (' + c + ').' : '.');
-}
-function listen(){
-  if (unsub.length) return;
-  unsub.push(db.collection('mascaras').onSnapshot({ includeMetadataChanges: true }, function(snap){
-    pending = snap.metadata.hasPendingWrites; fromCache = snap.metadata.fromCache;
-    var list = [], rem = {};
-    snap.forEach(function(doc){
-      var x = doc.data(), m = { id: doc.id, n: x.n || [], d: x.d || '', s: x.s || 0, a: x.a || '', p: x.p || 0, t: x.t || 'w', by: x.by || '', at: x.at || 0, st: x.st || '', pr: x.pr || [], ob: x.ob || '', sb: x.sb || '', sa: x.sa || 0 };
-      list.push(m); rem[doc.id] = sig(m);
-    });
-    list.sort(function(x, y){ return (x.n[0] || 99999) - (y.n[0] || 99999) || (x.id < y.id ? -1 : 1); });
-    var sg = list.map(function(m){ return m.id + rem[m.id]; }).join('|') + '#' + fromCache;
-    var first = !got.m; got.m = true; setReady();
-    if (sg === lastSig && !first){ updateSub(); return; }
-    lastSig = sg;
-    var selId = selected && selected.id, edId = editing && editing.id, by = {};
-    D = list; remote = rem; index(); applyShelves();
-    D.forEach(function(m){ by[m.id] = m; });
-    if (edId){ if (by[edId]) editing = by[edId]; else closeForm(); }
-    if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } }
-    renderShelves(); renderBoard(); search(); foot();
-  }, cloudErr));
-  unsub.push(db.collection('config').doc('geral').onSnapshot(function(d){
-    var x = d.exists ? d.data() : {}; remoteList = Array.isArray(x.list) && x.list.length ? x.list.map(Number) : seq(+x.shelves || 12);
-    got.c = true; setReady(); applyShelves(); renderShelves(); renderBoard(); search();
-  }, cloudErr));
-}
-function stopListen(){
-  unsub.forEach(function(f){ f(); }); unsub = []; got = { m: false, c: false }; lastSig = ''; remote = {}; D = [];
-  selected = null; index(); setReady(); renderShelves(); renderBoard();
-}
-function push(){
-  if (!ready) return;
-  var ops = [], seen = {}, col = db.collection('mascaras');
-  D.forEach(function(m){
-    seen[m.id] = 1; var g = sig(m);
-    if (remote[m.id] !== g){ ops.push([col.doc(m.id), { n: m.n, d: m.d, s: m.s, a: m.a, p: m.p, t: m.t, by: m.by || '', at: m.at || 0, st: m.st || '', pr: m.pr || [], ob: m.ob || '', sb: m.sb || '', sa: m.sa || 0 }]); remote[m.id] = g; }
-  });
-  Object.keys(remote).forEach(function(id){ if (!seen[id]){ ops.push([col.doc(id), null]); delete remote[id]; } });
-  if (SH.join() !== remoteList.join()){ ops.push([db.collection('config').doc('geral'), { shelves: maxSh(), list: SH.slice() }]); remoteList = SH.slice(); }
-  for (var i = 0; i < ops.length; i += 400){
-    var b = db.batch();
-    ops.slice(i, i + 400).forEach(function(o){ if (o[1]) b.set(o[0], o[1]); else b.delete(o[0]); });
-    b.commit().catch(cloudErr);
-  }
-}
-function importSeed(e){
-  var f = e.target.files && e.target.files[0]; if (!f) return;
-  var r = new FileReader();
-  r.onload = function(){
-    try {
-      var arr = JSON.parse(r.result);
-      if (!Array.isArray(arr) || !arr.length || !Array.isArray(arr[0].n)) throw 0;
-      D = arr.map(function(x){ return { id: x.id, n: x.n, d: x.d || '', s: x.s || 0, a: x.a || '', p: x.p || 0, t: x.t || 'w' }; });
-      index(); applyShelves(); log('imp', null, plural(D.length), 'Lista inicial'); push(); renderShelves(); renderBoard();
-    } catch (er) { $('note').textContent = 'Esse arquivo não é a lista inicial (dados-iniciais.json).'; }
-  };
-  r.readAsText(f);
-}
-function startCloud(){
-  document.body.classList.add('wait');
-  try {
-    firebase.initializeApp(FB); auth = firebase.auth(); db = firebase.firestore();
-    db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
-    auth.onAuthStateChanged(function(u){
-      var lg = $('login');
-      if (u){ lg.classList.remove('open'); lg.setAttribute('aria-hidden', 'true'); $('lp').value = ''; listen(); if (!NAME) openWho(); }
-      else { stopListen(); lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); }
-      foot();
-    });
-  } catch (er) { $('note').textContent = 'Não foi possível iniciar a sincronização.'; }
-}
 $('lf').addEventListener('submit', function(e){
   e.preventDefault(); if (!auth) return;
   var pw = $('lp').value, msg = { 'auth/wrong-password': 'Senha incorreta.', 'auth/invalid-credential': 'Senha incorreta.', 'auth/invalid-login-credentials': 'Senha incorreta.', 'auth/user-not-found': 'O acesso ainda não foi criado no Firebase.', 'auth/network-request-failed': 'Sem internet. O primeiro acesso precisa de conexão.', 'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.' };
@@ -1314,18 +1592,25 @@ $('lf').addEventListener('submit', function(e){
   clearErr($('lErr'), $('lg')); $('lGo').disabled = true;
   auth.signInWithEmailAndPassword(EMAIL, pw).catch(function(er){ fail($('lErr'), $('lg'), msg[er.code] || 'Não foi possível entrar (' + (er.code || 'erro') + ').'); }).then(function(){ $('lGo').disabled = false; });
 });
+
 $('outBtn').addEventListener('click', function(){ ask('Sair deste celular? Para entrar de novo será preciso a senha e internet.', 'Sair', function(){ auth.signOut(); }); });
+
 $('lp').addEventListener('input', function(){ clearErr($('lErr'), $('lg')); });
+
 $('wn').addEventListener('input', function(){ clearErr($('wErr'), $('wg')); });
+
 window.addEventListener('online', updateSub); window.addEventListener('offline', updateSub);
 
 renderShelves(); renderBoard(); foot();
+
 requestAnimationFrame(function(){ requestAnimationFrame(function(){ board.classList.remove('still'); }); });
+
 if (CLOUD) startCloud();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   try { navigator.serviceWorker.register('sw.js').catch(function(){}); } catch (e) {}
 }
+
 </script>
 </body>
 </html>
