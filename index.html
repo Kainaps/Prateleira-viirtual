@@ -295,6 +295,11 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 .group label.full input{text-align:left;text-align-last:left}
 .okc.g{background:var(--good);box-shadow:0 12px 32px color-mix(in srgb,var(--good) 45%,transparent)}
 
+/* espaço do teclado: a janelinha pode rolar até o campo ficar visível */
+.sheet .in{padding-bottom:calc(24px + env(safe-area-inset-bottom) + var(--kb, 0px))}
+.sheet .in{touch-action:pan-y}
+.modal.kb form,.modal.kb .hl{padding-bottom:70vh}
+
 </style>
 </head>
 <body>
@@ -819,13 +824,25 @@ function updateSub(){
 
 var navKey = '';
 
-function movePill(animate){
-  var nav = $('shelves'), pill = nav.querySelector('.pill2'), act = nav.querySelector('[aria-pressed="true"]');
+/* posição e largura dos botões de prateleira, medidas uma vez só (não mudam ao trocar a ativa).
+   Medir a cada troca forçava o navegador a recalcular a tela no meio da animação. */
+var chipGeo = null, navW = 0;
+function geo(){
+  if (!chipGeo){
+    var nav = $('shelves'); chipGeo = {}; navW = nav.clientWidth;
+    Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ chipGeo[b.dataset.s] = { x: b.offsetLeft, w: b.offsetWidth }; });
+  }
+  return chipGeo;
+}
+function chipCenter(s){ var g = geo()[s]; return g ? Math.max(0, g.x - navW / 2 + g.w / 2) : null; }
+function movePill(animate, s){
+  var nav = $('shelves'), pill = nav.querySelector('.pill2');
   if (!pill) return;
-  if (!act){ pill.style.width = '0px'; return; }
+  var g = geo()[s === undefined ? current : s];
+  if (!g){ pill.style.width = '0px'; return; }
   var snap = !animate || !parseFloat(pill.style.width);
   if (snap) pill.style.transition = 'none';
-  pill.style.width = act.offsetWidth + 'px'; tx(pill, act.offsetLeft);
+  pill.style.width = g.w + 'px'; tx(pill, g.x);
   if (snap){ void pill.offsetWidth; pill.style.transition = ''; }
 }
 
@@ -833,6 +850,7 @@ function renderShelves(){
   var nav = $('shelves'), list = SH.concat([LOOSE]), key = list.join(), fresh = key !== navKey;
   updateSub();
   if (fresh){
+    chipGeo = null;
     navKey = key;
     var keep = nav.scrollLeft; nav.innerHTML = '<span class="pill2" aria-hidden="true"></span>';
     list.forEach(function(s){
@@ -855,17 +873,18 @@ function renderShelves(){
   D.forEach(function(m){ if (m.st && worst[m.s || 0] !== 'r') worst[m.s || 0] = m.st; });
   Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){
     var k = +b.dataset.s;
-    b.setAttribute('aria-pressed', k === current ? 'true' : 'false');
-    if (worst[k]) b.dataset.st = worst[k]; else b.removeAttribute('data-st');
-    b.setAttribute('aria-label', (k ? 'Prateleira ' + k : 'Garras sem lugar') + (worst[k] ? ', tem garra com problema' : ''));
+    setA(b, 'aria-pressed', k === current ? 'true' : 'false');
+    setA(b, 'data-st', worst[k] || null);
+    setA(b, 'aria-label', (k ? 'Prateleira ' + k : 'Garras sem lugar') + (worst[k] ? ', tem garra com problema' : ''));
   });
   updateAlert();
   movePill(!fresh);
-  var act = nav.querySelector('[aria-pressed="true"]');
-  if (act){ var to = Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2); if (nav.scrollTo && !fresh) nav.scrollTo({ left: to, behavior: 'smooth' }); else nav.scrollLeft = to; }
+  var to = chipCenter(current);
+  if (to !== null && Math.abs(nav.scrollLeft - to) > 1){ if (nav.scrollTo && !fresh) nav.scrollTo({ left: to, behavior: 'smooth' }); else nav.scrollLeft = to; }
 }
 
-window.addEventListener('resize', function(){ movePill(false); });
+window.addEventListener('resize', function(){ chipGeo = null; movePill(false); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ chipGeo = null; movePill(false); });
 
 function plateHtml(m, n){
   var pills = m.n.length ? m.n.map(function(x){ return '<span class="pill">' + x + '</span>'; }).join('') : '<span class="pill sn">S/N</span>';
@@ -894,7 +913,7 @@ var slideFrom = 0;
 var DOTS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
 
 function fillPane(el, s){
-  el._stale = false;
+  el._stale = false; el._h = 0;
   if (s === null || s === undefined){ el.innerHTML = ''; return; }
   var p = paneData(s);
   el.innerHTML = '<h2><span class="bt">' + p.t + '</span><span class="meta"><span class="bc">' + p.c + '</span>' + (s ? '<button type="button" class="more" aria-label="Opções desta prateleira">' + DOTS + '</button>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
@@ -1048,31 +1067,56 @@ function setIds(){
   a = C.querySelector('.bc'); if (a) a.id = 'bCount';
   a = C.querySelector('.more'); if (a) a.id = 'bMore';
   a = C.querySelector('.rows'); if (a) a.id = 'rows';
-  PN.forEach(function(el, k){ if (k === 1){ el.removeAttribute('aria-hidden'); el.inert = false; } else { el.setAttribute('aria-hidden', 'true'); el.inert = true; } });
+  /* as vizinhas ficam fora de vista: só são escondidas do leitor de tela (sem "inert", que obrigava
+     o navegador a reavaliar cada garra das três prateleiras a cada troca) */
+  PN.forEach(function(el, k){ setA(el, 'aria-hidden', k === 1 ? null : 'true'); });
 }
 
+/* altura de cada prateleira, medida quando ela é preparada (com a tela parada) e guardada.
+   Medir no fim da troca obrigava o navegador a recalcular a tela inteira no meio do movimento. */
+function paneH(el){ if (!el._h) el._h = el.offsetHeight; return el._h; }
 function fit(){
-  var h = PN[1].offsetHeight;
-  if (peek && peek.firstChild) h = Math.max(h, peek.offsetHeight);
+  var h = paneH(PN[1]);
+  if (peek && peek.firstChild) h = Math.max(h, paneH(peek));
   if (h && h !== lastH){ lastH = h; board.style.height = h + 'px'; }
 }
 
+function fillOne(k){
+  var el = PN[k];
+  if (!el._stale) return false;
+  fillPane(el, nb(k - 1)); var r = el.querySelector('.rows'); if (r) mark(r);
+  /* a altura chega pelo observador de tamanho, depois que o navegador desenhar; nada é medido à força */
+  return true;
+}
+/* com pressa (um toque vai começar um arrasto): prepara as duas vizinhas agora */
 function fillNeighbors(){
   if (nbT){ clearTimeout(nbT); nbT = 0; }
-  for (var k = 0; k < 3; k += 2){
-    var el = PN[k];
-    if (el._stale){ fillPane(el, nb(k - 1)); var r = el.querySelector('.rows'); if (r) mark(r); }
-  }
+  fillOne(0); fillOne(2);
+}
+/* sem pressa: uma vizinha por vez, em tarefas separadas, para nunca travar a tela */
+function scheduleNb(){
+  if (nbT) return;
+  nbT = setTimeout(function step(){
+    nbT = 0;
+    if (fillOne(2) || fillOne(0)){ if (PN[0]._stale || PN[2]._stale) nbT = setTimeout(step, 16); }
+  }, 90);
 }
 
-function scheduleNb(){ if (!nbT) nbT = setTimeout(fillNeighbors, 90); }
-
+/* só mexe no que muda: não reescrever o que já está igual poupa o navegador de recalcular a tela */
+function setA(el, k, v){
+  if (v === null){ if (el.hasAttribute(k)) el.removeAttribute(k); }
+  else if (el.getAttribute(k) !== v) el.setAttribute(k, v);
+}
 function setChip(s){
-  var nav = $('shelves');
-  Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ b.setAttribute('aria-pressed', +b.dataset.s === s ? 'true' : 'false'); });
-  movePill(true);
-  var act = nav.querySelector('[aria-pressed="true"]');
-  if (act && nav.scrollTo) nav.scrollTo({ left: Math.max(0, act.offsetLeft - nav.clientWidth / 2 + act.offsetWidth / 2), behavior: 'smooth' });
+  var nav = $('shelves'), old = nav.querySelector('[aria-pressed="true"]'), nw = nav.querySelector('button[data-s="' + s + '"]');
+  if (old && old !== nw) old.setAttribute('aria-pressed', 'false');
+  if (nw) setA(nw, 'aria-pressed', 'true');
+  movePill(true, s);
+  /* centralizar o botão pede medidas da tela: fica para o próximo quadro, junto do trabalho normal do navegador */
+  requestAnimationFrame(function(){
+    var to = chipCenter(s);
+    if (to !== null && nav.scrollTo && Math.abs(nav.scrollLeft - to) > 1) nav.scrollTo({ left: to, behavior: 'smooth' });
+  });
 }
 
 /* troca de papéis sem redesenhar: o painel que saiu de vista vira o novo vizinho do outro lado */
@@ -1080,11 +1124,14 @@ function rotate(dir){
   var to = nb(dir); if (to === null) return;
   var el;
   if (dir > 0){ el = PN.shift(); PN.push(el); } else { el = PN.pop(); PN.unshift(el); }
-  el.innerHTML = ''; el._stale = true;
+  el._stale = true;   /* o conteúdo velho fica fora de vista até ser trocado, sem trabalho agora */
   X += dir * U;
   current = to;
   try { localStorage.setItem('prateleira', to); } catch (e) {}
-  setIds(); place(); closeSheets(); renderShelves();
+  setIds(); place();
+  /* fim da troca: só o necessário (o botão da prateleira já foi marcado ao soltar o dedo) */
+  if (selected || document.querySelector('.sheet.open')) closeSheets();
+  setChip(to);
   scheduleNb();
 }
 
@@ -1180,7 +1227,14 @@ board.addEventListener('click', function(e){
   if (b && PN[1].contains(b) && performance.now() - swipeT > 350) openMenu();
 });
 
-if (window.ResizeObserver){ var ro = new ResizeObserver(function(){ fit(); }); PN.forEach(function(el){ ro.observe(el); }); }
+if (window.ResizeObserver){
+  /* o observador recebe a altura nova sem forçar medida extra */
+  var ro = new ResizeObserver(function(list){
+    list.forEach(function(e){ var bb = e.borderBoxSize && e.borderBoxSize[0]; e.target._h = bb ? Math.round(bb.blockSize) : 0; });
+    fit();
+  });
+  PN.forEach(function(el){ ro.observe(el); });
+}
 
 window.addEventListener('resize', function(){ measure(); place(); fit(); });
 
@@ -1399,7 +1453,7 @@ function openRep(m, pre){
   clearErr($('rErr'), $('rPick')); clearErr($('rErr2'), $('rToG')); clearErr($('rErr3'), $('rObG'));
   $('rSevHelp').textContent = ''; setSev(m.st || (rSel.f ? 'r' : 'w'));
   openModal('rep');
-  if (pre === 'o') $('rOb').focus({ preventScroll: true });
+  if (pre === 'o') $('rOb').focus();
 }
 
 $('rPick').addEventListener('click', function(e){
@@ -1409,7 +1463,7 @@ $('rPick').addEventListener('click', function(e){
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   clearErr($('rErr'), $('rPick'));
   if (k === 'f'){ $('rFrom').classList.toggle('open', on); if (on && !rSevSet) setSev('r'); }
-  if (k === 'o'){ $('rOther').classList.toggle('open', on); clearErr($('rErr3'), $('rObG')); if (on) $('rOb').focus({ preventScroll: true }); }
+  if (k === 'o'){ $('rOther').classList.toggle('open', on); clearErr($('rErr3'), $('rObG')); if (on) $('rOb').focus(); }
 });
 
 $('rSev').addEventListener('click', function(e){ var b = e.target.closest('[data-v]'); if (b){ rSevSet = true; setSev(b.dataset.v); } });
@@ -1430,7 +1484,7 @@ $('rf').addEventListener('submit', function(e){
   var keys = Object.keys(PR).filter(function(k){ return rSel[k]; }), typed = $('rOb').value.trim().replace(/\s+/g, ' '), to = $('rTo').value.trim(), dest = null;
   var ob = [rSel.o ? typed : ''].concat(autoNotes(m.ob)).filter(Boolean).join(' ');
   if (!keys.length){ fail($('rErr'), $('rPick'), 'Marque o que aconteceu.'); $('rep').scrollTop = 0; return; }
-  if (rSel.o && !typed){ fail($('rErr3'), $('rObG'), 'Escreva qual é o problema.'); $('rOb').focus({ preventScroll: true }); return; }
+  if (rSel.o && !typed){ fail($('rErr3'), $('rObG'), 'Escreva qual é o problema.'); $('rOb').focus(); return; }
   if (rSel.f && to){
     if (!/^\d+$/.test(to)) { fail($('rErr2'), $('rToG'), 'Digite só o número do molde.'); return; }
     dest = byNum(to);
@@ -1476,7 +1530,7 @@ $('xPick').addEventListener('click', function(e){
   var k = b.dataset.k, on = !xSel[k];
   if (on) xSel[k] = 1; else delete xSel[k];
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  if (k === 'o'){ $('xOther').classList.toggle('open', on); clearErr($('xErr2'), $('xOG')); if (on) $('xOb').focus({ preventScroll: true }); }
+  if (k === 'o'){ $('xOther').classList.toggle('open', on); clearErr($('xErr2'), $('xOG')); if (on) $('xOb').focus(); }
 });
 
 $('xOb').addEventListener('input', function(){ clearErr($('xErr2'), $('xOG')); });
@@ -1498,7 +1552,7 @@ $('xf').addEventListener('submit', function(e){
     donor = byNum(v);
     if (!donor){ fail($('xErr'), $('xg'), 'Não achei a garra ' + v + '.'); return; }
     if (donor === m){ fail($('xErr'), $('xg'), 'É a mesma garra que está sendo consertada.'); return; }
-    if (xSel.o && !$('xOb').value.trim()){ fail($('xErr2'), $('xOG'), 'Escreva qual peça foi usada.'); $('xOb').focus({ preventScroll: true }); return; }
+    if (xSel.o && !$('xOb').value.trim()){ fail($('xErr2'), $('xOG'), 'Escreva qual peça foi usada.'); $('xOb').focus(); return; }
   }
   var now = Date.now(), who = NAME || 'Sem nome', jobs = [{ m: m, base: xBase }], note = '';
   m.st = ''; m.pr = []; m.ob = ''; m.sb = ''; m.sa = 0; m.by = who; m.at = now;
@@ -1610,6 +1664,113 @@ if (CLOUD) startCloud();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   try { navigator.serviceWorker.register('sw.js').catch(function(){}); } catch (e) {}
 }
+
+
+/* ---- janelinha de baixo: arrastar para baixo fecha (além do X) ----
+   Acompanha o dedo; fecha se passar de 30% da altura ou num movimento rápido para baixo.
+   Só começa se o arrasto for vertical, para baixo e com o conteúdo da janelinha no topo. */
+Array.prototype.forEach.call(document.querySelectorAll('.sheet .in'), function(card){
+  var d = null;
+  function clear(){ card.style.transition = ''; card.style.transform = ''; }
+  card.addEventListener('touchstart', function(e){
+    d = null;
+    if (e.touches.length !== 1 || !card.parentNode.classList.contains('open')) return;
+    var t = e.touches[0];
+    d = { x: t.clientX, y: t.clientY, dy: 0, lock: false, h: [[e.timeStamp, t.clientY]] };
+  }, { passive: true });
+  card.addEventListener('touchmove', function(e){
+    if (!d) return;
+    var t = e.touches[0], dx = t.clientX - d.x, dy = t.clientY - d.y;
+    if (!d.lock){
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (dy <= 0 || Math.abs(dx) > Math.abs(dy) || card.scrollTop > 0){ d = null; return; }
+      d.lock = true; card.style.transition = 'none';
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    }
+    if (e.cancelable) e.preventDefault();
+    d.dy = dy > 0 ? dy : -rubber(-dy, card.offsetHeight) * .5;
+    card.style.transform = 'translate3d(0,' + d.dy + 'px,0)';
+    d.h.push([e.timeStamp, t.clientY]);
+    while (d.h.length > 2 && e.timeStamp - d.h[0][0] > 100) d.h.shift();
+  }, { passive: false });
+  function end(e){
+    var g = d; d = null;
+    if (!g || !g.lock) return;
+    swipeT = performance.now();
+    var h = g.h, n = h.length, v = 0;
+    if (n > 1 && e.timeStamp - h[n - 1][0] < 80) v = (h[n - 1][1] - h[0][1]) / Math.max(1, h[n - 1][0] - h[0][0]) * 1000;
+    var H = card.offsetHeight, go = g.dy > H * .3 || (v > 500 && g.dy > 16);
+    if (go){
+      /* sai na velocidade do dedo: quanto mais rápido, mais curto (120 a 250 ms) */
+      var dur = Math.max(.12, Math.min(.25, (H - g.dy) / Math.max(v, 1400)));
+      card.style.transition = 'transform ' + dur + 's cubic-bezier(.22,1,.36,1)';
+      card.style.transform = 'translate3d(0,' + (H + 40) + 'px,0)';
+      setTimeout(function(){
+        card.style.transition = 'none'; card.style.transform = 'translate3d(0,110%,0)';
+        closeSheets();
+        requestAnimationFrame(function(){ requestAnimationFrame(clear); });
+      }, dur * 1000);
+    } else {
+      card.style.transition = 'transform .3s cubic-bezier(.22,1,.36,1)';
+      card.style.transform = 'translate3d(0,0,0)';
+      setTimeout(clear, 320);
+    }
+  }
+  card.addEventListener('touchend', end, { passive: true });
+  card.addEventListener('touchcancel', end, { passive: true });
+});
+
+/* ---- teclado: o campo em foco fica sempre visível, acima do teclado ----
+   Com o teclado aberto, as telas cheias se encaixam exatamente na área que sobra visível
+   (o visualViewport), mesmo quando o iPhone empurra a tela. Depois, o campo rola para dentro dela. */
+var VV = window.visualViewport;
+function kbSize(){
+  var k = VV ? Math.max(0, Math.round(window.innerHeight - VV.height - VV.offsetTop)) : 0;
+  document.documentElement.style.setProperty('--kb', k + 'px');
+  return k;
+}
+function isText(el){ return el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|file|button|submit)$/.test(el.type))); }
+/* Leva o campo para um lugar onde o teclado não chega.
+   Se o celular informa o teclado (visualViewport), usa a medida exata. Se não informa (por exemplo,
+   dentro de outro app, como a prévia no Claude), parte do princípio de que o teclado ocupa a metade
+   de baixo e deixa o campo logo abaixo da barra do topo. */
+function showField(){
+  var el = document.activeElement;
+  if (!isText(el)) return;
+  var box = el.closest('.modal, .sheet .in'); if (!box) return;
+  var k = kbSize(), vt = VV ? VV.offsetTop : 0, vh = VV ? VV.height : window.innerHeight;
+  var bar = box.querySelector('.bar'), top = (bar ? bar.getBoundingClientRect().bottom : vt) + 12;
+  var g = el.closest('.group') || el, r = g.getBoundingClientRect(), bottom = r.bottom;
+  var err = g.nextElementSibling;
+  if (err && err.classList.contains('err') && err.textContent) bottom = err.getBoundingClientRect().bottom;
+  var limit = k > 80 ? vt + vh - 16 : vt + window.innerHeight * .45;
+  if (bottom > limit || r.top < top) box.scrollTo({ top: box.scrollTop + r.top - top, behavior: REDUCE ? 'auto' : 'smooth' });
+}
+function fitModals(){
+  if (!VV) return;
+  var k = kbSize(), off = Math.max(0, Math.round(VV.offsetTop)), on = k > 0 || off > 0;
+  Array.prototype.forEach.call(document.querySelectorAll('.modal'), function(m){
+    if (on){ m.style.top = off + 'px'; m.style.bottom = 'auto'; m.style.height = Math.round(VV.height) + 'px'; }
+    else { m.style.top = m.style.bottom = m.style.height = ''; }
+  });
+}
+if (VV){ VV.addEventListener('resize', function(){ fitModals(); showField(); }); VV.addEventListener('scroll', function(){ fitModals(); showField(); }); }
+/* enquanto se digita, a tela ganha folga embaixo para o campo poder subir acima do teclado */
+var kbOff = 0;
+document.addEventListener('focusin', function(e){
+  if (!isText(e.target)) return;
+  clearTimeout(kbOff);
+  var m = e.target.closest('.modal'); if (m) m.classList.add('kb');
+  showField(); setTimeout(showField, 120); setTimeout(showField, 340);
+});
+document.addEventListener('focusout', function(){
+  clearTimeout(kbOff);
+  kbOff = setTimeout(function(){
+    if (isText(document.activeElement)) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.modal.kb'), function(m){ m.classList.remove('kb'); });
+    fitModals();
+  }, 250);
+});
 
 </script>
 </body>

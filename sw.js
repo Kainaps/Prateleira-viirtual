@@ -1,5 +1,5 @@
 /* Guarda o app no celular para funcionar sem internet. Com internet, busca a versão nova. */
-var CACHE = 'mascaras-v11';
+var CACHE = 'mascaras-v13';
 var FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
