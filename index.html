@@ -945,7 +945,8 @@ function matches(m){
 }
 
 function mark(r){
-  r = r || $('rows'); if (!r) return;
+  /* sem prateleira indicada: marca as três (atual e vizinhas), para nenhuma ficar escurecida sem motivo */
+  if (!r){ Array.prototype.forEach.call(document.querySelectorAll('#board .pane .rows'), function(x){ mark(x); }); return; }
   r.classList.toggle('dim', !!query || !!selected);
   Array.prototype.forEach.call(r.querySelectorAll('.plate'), function(el){
     var m = D[+el.dataset.i];
@@ -1036,7 +1037,13 @@ q.addEventListener('input', function(){
   search();
 });
 
-$('clear').addEventListener('click', function(){ q.value = ''; query = ''; field.classList.remove('has'); search(); q.focus(); });
+/* X da lupa: fecha a busca de verdade (limpa o texto, solta a garra selecionada e esconde o teclado) */
+$('clear').addEventListener('click', function(){
+  q.value = ''; query = ''; field.classList.remove('has');
+  q.blur();
+  closeSheets();
+  search();
+});
 
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSheets(); });
 
