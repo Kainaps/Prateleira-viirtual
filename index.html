@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<script>try{if(!localStorage.getItem('garras-sessao'))document.documentElement.className='lg'}catch(e){document.documentElement.className='lg'}</script>
+<script>try{if(!localStorage.getItem('garras-sessao'))document.documentElement.className='lg cobre'}catch(e){document.documentElement.className='lg cobre'}</script>
 <style>
 /* GAVETA TELA (visual): cores, tamanhos e animações. Regras de movimento em build/MOTION.md */
 /* Layout: título, busca fixa no topo, seletor de prateleira, painel com um andar por faixa (A no alto), folha de detalhes embaixo. */
@@ -303,12 +303,14 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 
 /* ---- entrada por pessoa ---- */
 html.lg #login{transform:none;visibility:visible;transition:none}
-html.lg body>:not(#login):not(script){visibility:hidden}
+/* login aberto: só ele existe na tela. A página de trás fica invisível e não rola */
+html.cobre,html.cobre body{overflow:hidden;overscroll-behavior:none}
+html.cobre body>:not(#login):not(script):not(.toast){visibility:hidden}
+#login{overscroll-behavior:contain}
 .people{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
-.pc{display:grid;justify-items:start;gap:2px;padding:14px;border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:box-shadow .2s ease-out,transform 90ms ease-out}
+.pc{display:flex;align-items:center;min-height:64px;padding:0 18px;border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:box-shadow .2s ease-out,transform 90ms ease-out}
 .pc:active{transform:scale(.97)}
-.pc .av{width:40px;height:40px;font-size:18px;margin-bottom:8px}
-.pc b{font-size:17px;font-weight:600}
+.pc b{font-size:18px;font-weight:600}
 .pc[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent) inset}
 #lPw .group{margin-top:20px}
 #lPw .cta{margin-bottom:4px}
@@ -413,7 +415,7 @@ footer .me button{padding:8px 12px}
 
 <div class="modal" id="login" aria-hidden="true" role="dialog" aria-label="Entrar">
   <form id="lf" novalidate>
-    <div class="hero"><h2>Garras</h2><p>Como você vai entrar?</p></div>
+    <div class="hero"><h2>Como você vai entrar?</h2></div>
     <div class="people" id="people" role="group" aria-label="Escolha o acesso"></div>
     <div class="reveal" id="lPw"><div>
       <div class="group" id="lg">
@@ -1708,11 +1710,11 @@ $('hClose').addEventListener('click', function(){ if (hUnsub){ hUnsub(); hUnsub 
 /* ---- entrada: escolhe Líder ou Auxiliar; na nuvem confirma com a senha daquele acesso ----
    Sem sessão no celular, a tela de entrada já nasce aberta (classe lg no <html>, antes de qualquer script),
    então a prateleira nunca aparece antes do login. */
-var escolhido = null;
+var escolhido = null, cobreT = 0;
 
 function pessoasHtml(){
   return EQUIPE.map(function(p){
-    return '<button type="button" class="pc" data-id="' + p.id + '" aria-pressed="false"><span class="av" style="background:hsl(' + hue(p.nome) + ' 55% 45%)" aria-hidden="true">' + esc(p.nome.charAt(0)) + '</span><b>' + esc(p.nome) + '</b></button>';
+    return '<button type="button" class="pc" data-id="' + p.id + '" aria-pressed="false"><b>' + esc(p.nome) + '</b></button>';
   }).join('');
 }
 
@@ -1739,7 +1741,10 @@ function showLogin(animate){
   var lg = $('login'), root = document.documentElement;
   if (!$('people').children.length) $('people').innerHTML = pessoasHtml();
   closeSheets();
-  if (!animate) root.classList.add('lg');
+  clearTimeout(cobreT);
+  if (!animate) root.classList.add('lg', 'cobre');
+  /* depois de subir por cima, a página de trás some: arrastar o dedo não mostra mais as prateleiras */
+  else cobreT = setTimeout(function(){ if (lg.classList.contains('open')) root.classList.add('cobre'); }, 420);
   lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); lg.scrollTop = 0;
   var ult = null; try { ult = pessoa(localStorage.getItem(ULTIMO)); } catch (e) {}
   escolhido = null;
@@ -1749,6 +1754,7 @@ function showLogin(animate){
 
 function hideLogin(){
   var lg = $('login'), root = document.documentElement;
+  clearTimeout(cobreT); root.classList.remove('cobre');
   if (root.classList.contains('lg')){
     /* veio aberta do primeiro quadro: tira a classe sem animar e deixa a saída deslizar */
     lg.classList.add('open'); lg.offsetWidth; root.classList.remove('lg');
