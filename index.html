@@ -12,6 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<script>try{if(!localStorage.getItem('garras-sessao'))document.documentElement.className='lg'}catch(e){document.documentElement.className='lg'}</script>
 <style>
 /* GAVETA TELA (visual): cores, tamanhos e animações. Regras de movimento em build/MOTION.md */
 /* Layout: título, busca fixa no topo, seletor de prateleira, painel com um andar por faixa (A no alto), folha de detalhes embaixo. */
@@ -300,6 +301,25 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 .sheet .in{touch-action:pan-y}
 .modal.kb form,.modal.kb .hl{padding-bottom:70vh}
 
+/* ---- entrada por pessoa ---- */
+html.lg #login{transform:none;visibility:visible;transition:none}
+html.lg body>:not(#login):not(script){visibility:hidden}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.pc{display:grid;justify-items:start;gap:2px;padding:14px;border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:box-shadow .2s ease-out,transform 90ms ease-out}
+.pc:active{transform:scale(.97)}
+.pc .av{width:40px;height:40px;font-size:18px;margin-bottom:8px}
+.pc b{font-size:17px;font-weight:600}
+.pc[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent) inset}
+#lPw .group{margin-top:20px}
+#lPw .cta{margin-bottom:4px}
+.me{display:flex;align-items:center;gap:12px;max-width:360px;margin:14px auto 0;padding:10px 6px 10px 12px;border-radius:16px;background:var(--card);text-align:left}
+.me>span:nth-child(2){flex:1;display:grid;line-height:1.25}
+.me b{font-size:16px;color:var(--ink)}
+.me small{font-size:13px;color:var(--mute)}
+footer .me button{padding:8px 12px}
+/* Auxiliar: só ver, reportar e consertar. Criar, editar e remover ficam com o Líder. */
+.aux .fab,.aux #sEdit,.aux #sDel,.aux #sheet .acts:has(>#sEdit){display:none}
+
 </style>
 </head>
 <body>
@@ -327,10 +347,9 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 
 <footer>
   <button type="button" id="histBtn" class="big2">Histórico de alterações</button>
-  <button type="button" id="whoBtn"></button>
+  <div class="me" id="me" hidden><span class="av" id="meAv" aria-hidden="true"></span><span><b id="meNome"></b><small id="meInfo"></small></span><button type="button" id="outBtn">Sair</button></div>
   <div id="localNote" hidden>As alterações feitas aqui ficam salvas só neste celular.</div>
   <button type="button" id="resetBtn" class="danger" hidden>Restaurar lista original</button>
-  <button type="button" id="outBtn" hidden>Sair deste celular</button>
 </footer>
 
 <div class="sheet" id="sheet" aria-hidden="true">
@@ -392,20 +411,18 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
   </form>
 </div>
 
-<div class="modal" id="login" aria-hidden="true">
+<div class="modal" id="login" aria-hidden="true" role="dialog" aria-label="Entrar">
   <form id="lf" novalidate>
-    <div class="hero"><h2>Garras</h2><p>Digite a senha do setor para entrar. Só é preciso uma vez neste celular.</p></div>
-    <div class="group" id="lg"><label for="lp">Senha<input id="lp" type="password" autocomplete="current-password" placeholder="Senha do setor"></label></div>
-    <p class="err" id="lErr" role="alert"></p>
-    <button type="submit" class="cta" id="lGo">Entrar</button>
-  </form>
-</div>
-<div class="modal" id="who" aria-hidden="true">
-  <form id="wf" novalidate>
-    <div class="hero"><h2>Quem está usando?</h2><p>Seu nome aparece no histórico quando você adiciona, altera ou remove uma garra.</p></div>
-    <div class="group" id="wg"><label for="wn">Nome<input id="wn" autocomplete="given-name" autocapitalize="words" maxlength="24" placeholder="Seu nome"></label></div>
-    <p class="err" id="wErr" role="alert"></p>
-    <button type="submit" class="cta">Continuar</button>
+    <div class="hero"><h2>Garras</h2><p>Como você vai entrar?</p></div>
+    <div class="people" id="people" role="group" aria-label="Escolha o acesso"></div>
+    <div class="reveal" id="lPw"><div>
+      <div class="group" id="lg">
+        <label for="ln" id="lNome">Nome<input id="ln" autocomplete="given-name" autocapitalize="words" maxlength="24" placeholder="Seu nome" tabindex="-1" enterkeyhint="next"></label>
+        <label for="lp" id="lSenha">Senha<input id="lp" type="password" autocomplete="current-password" placeholder="Senha do acesso" tabindex="-1"></label>
+      </div>
+      <p class="err" id="lErr" role="alert"></p>
+      <button type="submit" class="cta" id="lGo" tabindex="-1">Entrar</button>
+    </div></div>
   </form>
 </div>
 
@@ -468,9 +485,9 @@ footer .big2{display:block;margin:0 auto 6px;background:var(--card);color:var(--
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="okc" id="okc" data-state="out" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M14 25l7 7 13-15" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-<script src="firebase-app-compat.js"></script>
-<script src="firebase-auth-compat.js"></script>
-<script src="firebase-firestore-compat.js"></script>
+<script defer src="firebase-app-compat.js"></script>
+<script defer src="firebase-auth-compat.js"></script>
+<script defer src="firebase-firestore-compat.js"></script>
 
 <script>
 /* GAVETA REGRAS: cálculo, validação e decisões. Não mexe na tela nem no banco. */
@@ -583,17 +600,50 @@ function fields(m){ var c = clean(m, m.id), o = {}; FIELDS.forEach(function(k){ 
 
 function sig(m){ return JSON.stringify([m.n, m.d, m.s, m.a, m.p, m.t, m.st || '', m.pr || [], m.ob || '', m.sb || '', m.sa || 0]); }
 
+/* ---- equipe e hierarquia ----
+   Líder: cria, edita e remove garras e prateleiras. Auxiliar: vê, reporta problema e marca conserto.
+   As regras do Firestore conferem a mesma tabela no servidor; esconder botões aqui é só para a tela ficar limpa. */
+var EQUIPE = [
+  { id: 'lider', nome: 'Líder', papel: 'lider' },
+  { id: 'auxiliar', nome: 'Auxiliar', papel: 'aux' }
+];
+/* nome que o Auxiliar digita no login: vai para o histórico */
+function nomeLimpo(v){ v = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 24); return v.length >= 2 && v !== 'Líder' ? v : ''; }
+function pessoa(id){ for (var i = 0; i < EQUIPE.length; i++) if (EQUIPE[i].id === id) return EQUIPE[i]; return null; }
+function emailDe(p){ return p.id + '@' + DOMINIO; }
+function pessoaPorEmail(e){
+  e = String(e || '').toLowerCase();
+  for (var i = 0; i < EQUIPE.length; i++) if (emailDe(EQUIPE[i]) === e) return EQUIPE[i];
+  return null;
+}
+
 /* GAVETA DADOS: memória do celular e sincronização com o Firebase. */
 
 var BASE = /*DATA*/[];
 
 var FB = {"apiKey":"AIzaSyBkows79dBE8M-k3n6AMeROIsXmrmcjfjM","authDomain":"armazenamento-de-garras.firebaseapp.com","projectId":"armazenamento-de-garras","storageBucket":"armazenamento-de-garras.firebasestorage.app","messagingSenderId":"262555537859","appId":"1:262555537859:web:fd4166f775e2cea599ed76"}, EMAIL = 'equipe@armazenamento-de-garras.firebaseapp.com';
 
-var CLOUD = !!(FB && window.firebase), auth = null, db = null, ready = false, pending = false, fromCache = true;
+/* o Firebase carrega depois da primeira tela (defer); por isso a nuvem é decidida pela configuração */
+var DOMINIO = (/@(.+)$/.exec(EMAIL) || [])[1] || 'armazenamento-de-garras.firebaseapp.com';
+var CLOUD = !!FB, auth = null, db = null, ready = false, pending = false, fromCache = true;
 
 var KEY = 'mascaras-dados-v1', HKEY = 'mascaras-hist-v1', D = [], SH = [], edited = false, NAME = '';
 
-try { NAME = localStorage.getItem('mascaras-nome') || ''; } catch (e) {}
+/* sessão: quem está usando este celular (a nuvem confirma pelo login) */
+var SESSAO = 'garras-sessao', ULTIMO = 'garras-ultimo', NOMEK = 'garras-nome', ME = null, LIDER = false;
+function nomeSalvo(){ try { return nomeLimpo(localStorage.getItem(NOMEK)); } catch (e) { return ''; } }
+try { ME = pessoa(localStorage.getItem(SESSAO)); } catch (e) {}
+function entrar(p){
+  ME = p; LIDER = p.papel === 'lider';
+  /* Líder aparece como "Líder"; Auxiliar aparece com o nome que digitou */
+  NAME = LIDER ? p.nome : (nomeSalvo() || p.nome);
+  try { localStorage.setItem(SESSAO, p.id); localStorage.setItem(ULTIMO, p.id); } catch (e) {}
+}
+function sairSessao(){
+  ME = null; NAME = ''; LIDER = false;
+  try { localStorage.removeItem(SESSAO); } catch (e) {}
+}
+if (ME) entrar(ME);
 
 SH = seq(12);
 
@@ -702,16 +752,20 @@ function push(){
   var ops = [], seen = {}, col = db.collection('mascaras');
   /* Só os campos que este celular mudou vão para a nuvem (set com merge).
      Se outro celular mexeu em outro campo da mesma garra, as duas mudanças ficam. */
+  /* Auxiliar: só os campos do aviso de manutenção. Criar, apagar e mexer em prateleiras é do Líder
+     (as regras do Firestore recusariam de qualquer jeito; aqui o app nem tenta). */
+  var permitidos = LIDER ? FIELDS : STF;
   D.forEach(function(m){
     seen[m.id] = 1;
     var f = fields(m), old = remote[m.id], ch = {}, any = false;
-    FIELDS.forEach(function(k){ if (!old || JSON.stringify(old[k]) !== JSON.stringify(f[k])){ ch[k] = f[k]; any = true; } });
-    if (any){ ops.push([col.doc(m.id), old ? ch : f]); remote[m.id] = f; }
+    if (!old && !LIDER) return;
+    permitidos.forEach(function(k){ if (!old || JSON.stringify(old[k]) !== JSON.stringify(f[k])){ ch[k] = f[k]; any = true; } });
+    if (any){ ops.push([col.doc(m.id), old ? ch : f]); remote[m.id] = old ? Object.assign({}, old, ch) : f; }
   });
-  Object.keys(remote).forEach(function(id){ if (!seen[id]){ ops.push([col.doc(id), null]); delete remote[id]; } });
+  if (LIDER) Object.keys(remote).forEach(function(id){ if (!seen[id]){ ops.push([col.doc(id), null]); delete remote[id]; } });
   /* prateleiras: acrescentar e tirar com operações atômicas do banco, para não desfazer o que outro celular fez */
   var add = SH.filter(function(k){ return remoteList.indexOf(k) < 0; }), del = remoteList.filter(function(k){ return SH.indexOf(k) < 0; });
-  if (add.length || del.length){
+  if (LIDER && (add.length || del.length)){
     var cref = db.collection('config').doc('geral'), fv = firebase.firestore.FieldValue;
     if (cfgList && fv && fv.arrayUnion){
       if (add.length) ops.push([cref, { list: fv.arrayUnion.apply(fv, add) }]);
@@ -743,14 +797,18 @@ function importSeed(e){
 
 function startCloud(){
   document.body.classList.add('wait');
+  if (!window.firebase){ $('note').textContent = 'Não foi possível carregar a sincronização. Abra de novo com internet.'; return; }
   try {
     firebase.initializeApp(FB); auth = firebase.auth(); db = firebase.firestore();
     db.enablePersistence({ synchronizeTabs: true }).catch(function(){});
     auth.onAuthStateChanged(function(u){
-      var lg = $('login');
-      if (u){ lg.classList.remove('open'); lg.setAttribute('aria-hidden', 'true'); $('lp').value = ''; listen(); if (!NAME) openWho(); }
-      else { stopListen(); lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); }
-      foot();
+      var p = u ? pessoaPorEmail(u.email) : null;
+      if (u && !p){
+        /* conta antiga (senha única do setor) ou de fora da equipe: agora cada pessoa entra com o próprio nome */
+        auth.signOut(); return void loginFalhou('Esse acesso não é mais usado. Entre como Líder ou Auxiliar.');
+      }
+      if (p){ entrar(p); applyRole(); hideLogin(); listen(); }
+      else { var tinha = !!ME; stopListen(); sairSessao(); applyRole(); showLogin(tinha); }
     });
   } catch (er) { $('note').textContent = 'Não foi possível iniciar a sincronização.'; }
 }
@@ -847,7 +905,7 @@ function movePill(animate, s){
 }
 
 function renderShelves(){
-  var nav = $('shelves'), list = SH.concat([LOOSE]), key = list.join(), fresh = key !== navKey;
+  var nav = $('shelves'), list = SH.concat([LOOSE]), key = list.join() + (LIDER ? '+' : ''), fresh = key !== navKey;
   updateSub();
   if (fresh){
     chipGeo = null;
@@ -862,11 +920,13 @@ function renderShelves(){
       b.addEventListener('click', function(){ show(s); });
       nav.appendChild(b);
     });
-    var plus = document.createElement('button');
+    if (LIDER){
+      var plus = document.createElement('button');
     plus.type = 'button'; plus.className = 'plus'; plus.innerHTML = '<span>+</span>';
     plus.setAttribute('aria-label', 'Criar nova prateleira');
-    plus.addEventListener('click', function(){ var n = maxSh() + 1; ask('Criar a prateleira ' + n + '?', 'Criar', function(){ SH.push(n); log('sp', null, '', 'Prateleira ' + n); save(); show(n); foot(); }); });
+    plus.addEventListener('click', function(){ if (!LIDER) return; var n = maxSh() + 1; ask('Criar a prateleira ' + n + '?', 'Criar', function(){ SH.push(n); log('sp', null, '', 'Prateleira ' + n); save(); show(n); foot(); }); });
     nav.appendChild(plus);
+    }
     nav.scrollLeft = keep;
   }
   var worst = {};
@@ -916,7 +976,7 @@ function fillPane(el, s){
   el._stale = false; el._h = 0;
   if (s === null || s === undefined){ el.innerHTML = ''; return; }
   var p = paneData(s);
-  el.innerHTML = '<h2><span class="bt">' + p.t + '</span><span class="meta"><span class="bc">' + p.c + '</span>' + (s ? '<button type="button" class="more" aria-label="Opções desta prateleira">' + DOTS + '</button>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
+  el.innerHTML = '<h2><span class="bt">' + p.t + '</span><span class="meta"><span class="bc">' + p.c + '</span>' + (s && LIDER ? '<button type="button" class="more" aria-label="Opções desta prateleira">' + DOTS + '</button>' : '') + '</span></h2><div class="rows">' + p.h + '</div>';
 }
 
 function renderBoard(){
@@ -925,7 +985,8 @@ function renderBoard(){
     C._stale = false;
     C.innerHTML = '<h2><span class="bt">Prateleira ' + (current || 1) + '</span><span class="meta"><span class="bc"></span></span></h2><div class="rows">' + (!ready ? '<p class="hint">Carregando a lista…</p>'
       : fromCache ? '<p class="hint">Conecte à internet para baixar a lista pela primeira vez.</p>'
-      : '<p class="hint">A lista está vazia. Importe o arquivo dados-iniciais.json para começar.</p><label class="import">Importar lista inicial<input type="file" id="seed" accept=".json,application/json"></label>') + '</div>';
+      : LIDER ? '<p class="hint">A lista está vazia. Importe o arquivo dados-iniciais.json para começar.</p><label class="import">Importar lista inicial<input type="file" id="seed" accept=".json,application/json"></label>'
+      : '<p class="hint">A lista ainda está vazia. O líder importa a lista inicial.</p>') + '</div>';
     PN[0].innerHTML = PN[2].innerHTML = ''; PN[0]._stale = PN[2]._stale = false;
     setIds(); var sd = $('seed'); if (sd) sd.addEventListener('change', importSeed);
     fit(); return;
@@ -1249,7 +1310,7 @@ measure(); place();
 
 /* opções da prateleira: as ações ficam junto do título dela */
 function openMenu(){
-  if (!current) return;
+  if (!current || !LIDER) return;
   var n = inShelf(current).length;
   closeSheets();
   $('mTitle').textContent = 'Prateleira ' + current;
@@ -1261,6 +1322,7 @@ function openMenu(){
 $('mAdd').addEventListener('click', function(){ openForm(null); });
 
 $('mDel').addEventListener('click', function(){
+  if (!LIDER) return;
   var s = current, items = inShelf(s), n = items.length;
   ask('Remover a prateleira ' + s + '?', 'Remover', function(){
     items.forEach(function(m){ m.s = 0; });
@@ -1283,7 +1345,15 @@ function ask(text, go, fn, sub, danger){
 
 $('askGo').addEventListener('click', function(){ var f = askFn; askFn = null; closeSheets(); if (f) f(); });
 
-function foot(){ $('whoBtn').textContent = NAME ? 'Neste celular: ' + NAME : 'Definir meu nome'; $('localNote').hidden = CLOUD || !edited; $('resetBtn').hidden = CLOUD || !edited; $('outBtn').hidden = !(CLOUD && auth && auth.currentUser); }
+function foot(){
+  var me = $('me');
+  me.hidden = !ME;
+  if (ME){
+    $('meNome').textContent = NAME; $('meInfo').textContent = LIDER ? '' : 'Auxiliar'; $('meInfo').hidden = LIDER;
+    $('meAv').textContent = NAME.charAt(0).toUpperCase(); $('meAv').style.background = 'hsl(' + hue(NAME) + ' 55% 45%)';
+  }
+  $('localNote').hidden = CLOUD || !edited; $('resetBtn').hidden = CLOUD || !edited || !LIDER;
+}
 
 function refresh(){ index(); renderShelves(); renderBoard(); search(); foot(); }
 
@@ -1301,6 +1371,7 @@ function fillPos(){
 }
 
 function openForm(m){
+  if (!LIDER) return;
   closeSheets(); editing = m || null;
   $('fTitle').textContent = m ? 'Editar garra' : 'Nova garra';
   $('fN1').value = m && m.n[0] ? m.n[0] : ''; $('fN2').value = m && m.n[1] ? m.n[1] : '';
@@ -1367,7 +1438,7 @@ $('add').addEventListener('click', function(){ openForm(null); });
 $('sEdit').addEventListener('click', function(){ if (selected) openForm(selected); });
 
 $('sDel').addEventListener('click', function(){
-  var m = selected; if (!m) return;
+  var m = selected; if (!m || !LIDER) return;
   ask('Remover a garra ' + label(m) + ' da lista?', 'Remover', function(){ D.splice(D.indexOf(m), 1); renum(); log('del', m, where(m)); save(); refresh(); toast('Garra ' + label(m) + ' removida'); }, '', true);
 });
 
@@ -1634,39 +1705,112 @@ $('hFil').addEventListener('click', function(){ hFilter = null; loadHist(); });
 
 $('hClose').addEventListener('click', function(){ if (hUnsub){ hUnsub(); hUnsub = null; } $('hist').classList.remove('open'); $('hist').setAttribute('aria-hidden', 'true'); });
 
-function openWho(){ $('wn').value = NAME; clearErr($('wErr'), $('wg')); $('who').classList.add('open'); $('who').setAttribute('aria-hidden', 'false'); }
+/* ---- entrada: escolhe Líder ou Auxiliar; na nuvem confirma com a senha daquele acesso ----
+   Sem sessão no celular, a tela de entrada já nasce aberta (classe lg no <html>, antes de qualquer script),
+   então a prateleira nunca aparece antes do login. */
+var escolhido = null;
 
-$('whoBtn').addEventListener('click', openWho);
+function pessoasHtml(){
+  return EQUIPE.map(function(p){
+    return '<button type="button" class="pc" data-id="' + p.id + '" aria-pressed="false"><span class="av" style="background:hsl(' + hue(p.nome) + ' 55% 45%)" aria-hidden="true">' + esc(p.nome.charAt(0)) + '</span><b>' + esc(p.nome) + '</b></button>';
+  }).join('');
+}
 
-$('wf').addEventListener('submit', function(e){
-  e.preventDefault();
-  var v = $('wn').value.trim().replace(/\s+/g, ' ');
-  if (v.length < 2){ fail($('wErr'), $('wg'), 'Digite seu nome.'); return; }
-  NAME = v; try { localStorage.setItem('mascaras-nome', v); } catch (er) {}
-  $('who').classList.remove('open'); $('who').setAttribute('aria-hidden', 'true'); if (document.activeElement) document.activeElement.blur(); foot();
+function escolher(p, foco){
+  escolhido = p;
+  Array.prototype.forEach.call($('people').children, function(b){ b.setAttribute('aria-pressed', String(!!p && b.dataset.id === p.id)); });
+  clearErr($('lErr'), $('lg'));
+  var aux = !!p && p.papel === 'aux';
+  /* Líder: só a senha. Auxiliar: nome (para o histórico) e senha. Na prévia não há senha. */
+  if (!CLOUD && p && !aux){ entrarLocal(p); return; }
+  $('lNome').hidden = !aux; $('lSenha').hidden = !CLOUD;
+  var open = !!p;
+  $('lPw').classList.toggle('open', open);
+  $('lp').tabIndex = $('ln').tabIndex = $('lGo').tabIndex = open ? 0 : -1;
+  if (p){
+    $('lGo').textContent = 'Entrar como ' + p.nome; $('lp').value = '';
+    if (aux) $('ln').value = nomeSalvo();
+    var alvo = aux && !$('ln').value ? $('ln') : CLOUD ? $('lp') : $('ln');
+    if (foco) alvo.focus({ preventScroll: true });
+  }
+}
+
+function showLogin(animate){
+  var lg = $('login'), root = document.documentElement;
+  if (!$('people').children.length) $('people').innerHTML = pessoasHtml();
+  closeSheets();
+  if (!animate) root.classList.add('lg');
+  lg.classList.add('open'); lg.setAttribute('aria-hidden', 'false'); lg.scrollTop = 0;
+  var ult = null; try { ult = pessoa(localStorage.getItem(ULTIMO)); } catch (e) {}
+  escolhido = null;
+  if (ult && CLOUD) escolher(ult, false);
+  else { Array.prototype.forEach.call($('people').children, function(b){ b.setAttribute('aria-pressed', 'false'); }); $('lPw').classList.remove('open'); }
+}
+
+function hideLogin(){
+  var lg = $('login'), root = document.documentElement;
+  if (root.classList.contains('lg')){
+    /* veio aberta do primeiro quadro: tira a classe sem animar e deixa a saída deslizar */
+    lg.classList.add('open'); lg.offsetWidth; root.classList.remove('lg');
+  }
+  lg.classList.remove('open'); lg.setAttribute('aria-hidden', 'true');
+  $('lp').value = ''; $('lGo').disabled = false;
+  if (document.activeElement && lg.contains(document.activeElement)) document.activeElement.blur();
+}
+
+function applyRole(){
+  document.body.classList.toggle('aux', !!ME && !LIDER);
+  renderShelves(); renderBoard(); foot();
+}
+
+function entrarLocal(p){ entrar(p); applyRole(); hideLogin(); toast(LIDER ? 'Entrou como Líder' : 'Olá, ' + NAME); }
+
+function loginFalhou(msg){ showLogin(false); fail($('lErr'), $('lg'), msg); }
+
+$('people').addEventListener('click', function(e){
+  var b = e.target.closest('.pc'); if (!b) return;
+  escolher(pessoa(b.dataset.id), true);
 });
 
 $('lf').addEventListener('submit', function(e){
-  e.preventDefault(); if (!auth) return;
-  var pw = $('lp').value, msg = { 'auth/wrong-password': 'Senha incorreta.', 'auth/invalid-credential': 'Senha incorreta.', 'auth/invalid-login-credentials': 'Senha incorreta.', 'auth/user-not-found': 'O acesso ainda não foi criado no Firebase.', 'auth/network-request-failed': 'Sem internet. O primeiro acesso precisa de conexão.', 'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.' };
+  e.preventDefault();
+  if (!escolhido) return;
+  if (escolhido.papel === 'aux'){
+    var nm = nomeLimpo($('ln').value);
+    if (!nm){ fail($('lErr'), $('lg'), 'Digite seu nome. Ele aparece no histórico.'); $('ln').focus(); return; }
+    try { localStorage.setItem(NOMEK, nm); } catch (er) {}
+  }
+  if (!CLOUD){ entrarLocal(escolhido); return; }
+  if (!auth){ fail($('lErr'), $('lg'), 'Carregando… tente de novo em um instante.'); return; }
+  var pw = $('lp').value, msg = { 'auth/wrong-password': 'Senha incorreta.', 'auth/invalid-credential': 'Senha incorreta.', 'auth/invalid-login-credentials': 'Senha incorreta.', 'auth/user-not-found': 'O acesso "' + escolhido.nome + '" ainda não foi criado no Firebase.', 'auth/network-request-failed': 'Sem internet. Entrar precisa de conexão.', 'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.' };
   if (!pw){ fail($('lErr'), $('lg'), 'Digite a senha.'); return; }
   clearErr($('lErr'), $('lg')); $('lGo').disabled = true;
-  auth.signInWithEmailAndPassword(EMAIL, pw).catch(function(er){ fail($('lErr'), $('lg'), msg[er.code] || 'Não foi possível entrar (' + (er.code || 'erro') + ').'); }).then(function(){ $('lGo').disabled = false; });
+  try { localStorage.setItem(ULTIMO, escolhido.id); } catch (er) {}
+  auth.signInWithEmailAndPassword(emailDe(escolhido), pw).catch(function(er){ fail($('lErr'), $('lg'), msg[er.code] || 'Não foi possível entrar (' + (er.code || 'erro') + ').'); }).then(function(){ $('lGo').disabled = false; });
 });
 
-$('outBtn').addEventListener('click', function(){ ask('Sair deste celular? Para entrar de novo será preciso a senha e internet.', 'Sair', function(){ auth.signOut(); }); });
+$('outBtn').addEventListener('click', function(){
+  ask(LIDER ? 'Sair do acesso Líder?' : 'Sair, ' + NAME + '?', 'Sair', function(){
+    if (CLOUD && auth) auth.signOut();
+    else { sairSessao(); applyRole(); showLogin(true); }
+  }, CLOUD ? 'Para entrar de novo será preciso a senha e internet.' : '');
+});
 
 $('lp').addEventListener('input', function(){ clearErr($('lErr'), $('lg')); });
-
-$('wn').addEventListener('input', function(){ clearErr($('wErr'), $('wg')); });
+$('ln').addEventListener('input', function(){ clearErr($('lErr'), $('lg')); });
+/* "próximo" no teclado do nome leva para a senha */
+$('ln').addEventListener('keydown', function(e){ if (e.key === 'Enter' && CLOUD){ e.preventDefault(); $('lp').focus(); } });
 
 window.addEventListener('online', updateSub); window.addEventListener('offline', updateSub);
 
+document.body.classList.toggle('aux', !!ME && !LIDER);
 renderShelves(); renderBoard(); foot();
+if (!ME) showLogin(false);
 
 requestAnimationFrame(function(){ requestAnimationFrame(function(){ board.classList.remove('still'); }); });
 
-if (CLOUD) startCloud();
+/* o SDK do Firebase vem com defer: só roda depois que a primeira tela já foi desenhada */
+if (CLOUD){ if (window.firebase) startCloud(); else window.addEventListener('DOMContentLoaded', startCloud); }
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   try { navigator.serviceWorker.register('sw.js').catch(function(){}); } catch (e) {}
