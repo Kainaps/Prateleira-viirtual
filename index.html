@@ -322,6 +322,184 @@ footer .me button{padding:8px 12px}
 /* Auxiliar: só ver, reportar e consertar. Criar, editar e remover ficam com o Líder. */
 .aux .fab,.aux #sEdit,.aux #sDel,.aux #sheet .acts:has(>#sEdit){display:none}
 
+/* ---- próximas trocas ---- */
+#tBtn{display:flex;align-items:center;gap:5px;flex:none;width:auto;height:32px;padding:0 10px;border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font:inherit;font-size:14px;font-weight:600;transition:transform 90ms ease-out}
+#tBtn:active{transform:scale(.95)}
+#tBtn svg{color:currentColor}
+#tCount{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-style:normal;font-size:12px;font-weight:700;box-sizing:border-box}
+#tCount[hidden]{display:none}
+.field.has #tBtn{display:none}
+.alert.nx{background:color-mix(in srgb,var(--accent) 10%,var(--card));color:var(--ink)}
+.alert.nx svg{flex:none;color:var(--accent)}
+.alert.nx small{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-top:1px}
+.tprev{margin:10px 4px 0;min-height:0;font-size:15px;color:var(--mute)}
+.tprev b{color:var(--ink)}
+.tprev .mini{vertical-align:-4px;margin-right:4px}
+.tprev .bad{color:var(--bad-ink);font-weight:600}
+#tList{margin-top:8px}
+.trow{display:flex;align-items:stretch;background:var(--card);border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.tgo{flex:1;min-width:0;display:grid;grid-template-columns:66px 1fr;align-items:start;gap:12px;padding:12px 12px 12px 16px;border:0;background:transparent;color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.tgo:disabled{cursor:default;opacity:1}
+.tgo time{display:grid;font-variant-numeric:tabular-nums}
+.tgo time b{font-size:18px}
+.tgo time small{font-size:12px;color:var(--mute);margin-top:2px}
+.tgo time.late small{color:var(--warn-ink);font-weight:600}
+.tgo .q{font-size:16px;font-weight:600}
+.tgo .d{display:block;font-size:14px;color:var(--mute);margin-top:2px;text-transform:capitalize;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tgo .d.nog{text-transform:none;white-space:normal}
+.tgo .x{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;font-weight:600;color:var(--warn-ink)}
+.tgo .x.r{color:var(--bad-ink)}
+.tgo .loc{display:block;margin-top:4px;font-size:15px;font-weight:600;color:var(--accent)}
+.tok{flex:none;align-self:center;margin-right:12px;height:32px;padding:0 12px;border:0;border-radius:10px;background:var(--line);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:transform 90ms ease-out}
+.tok:active{transform:scale(.95)}
+.tfoot{margin-top:18px}
+
+/* ---- abas Garras / Esteiras ---- */
+body{padding-bottom:calc(170px + env(safe-area-inset-bottom))}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:9;display:flex;justify-content:center;gap:0;padding:6px 16px calc(6px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 86%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);box-shadow:0 -1px 0 var(--line)}
+.tabs button{position:relative;flex:1;max-width:200px;display:grid;justify-items:center;align-content:center;gap:1px;height:54px;padding:2px 0 0;border:0;background:none;color:var(--mute);font:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:color .2s ease-out,transform 90ms ease-out}
+.tabs button:active{transform:scale(.94)}
+.tabs button[aria-pressed="true"]{color:var(--accent)}
+.tabs .badge{position:absolute;top:2px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--warn);color:var(--on-warn);font-style:normal;font-size:12px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--card)}
+.tabs .badge.r{background:var(--bad);color:#fff}
+.tabs .badge[hidden]{display:none}
+.fab{bottom:calc(84px + env(safe-area-inset-bottom))}
+body.te>header,body.te>.search,body.te>#shelves,body.te>#board,body.te #add{display:none}
+body:not(.te) #eAdd{display:none}
+.tabin{animation:tabin .22s cubic-bezier(.22,1,.36,1)}
+@keyframes tabin{from{opacity:0;transform:translateY(6px)}}
+.cta.sec{background:var(--card);color:var(--accent);margin-top:16px}
+#eDesc,#erDesc,#exDesc{text-transform:none}
+
+/* ---- abas: traço quando inativa, preenchido quando ativa (como SF Symbols) ---- */
+.tabs svg{display:block;transition:transform .25s cubic-bezier(.22,1,.36,1)}
+.tabs svg .fi{fill:transparent;transition:fill .25s cubic-bezier(.2,.8,.2,1)}
+.tabs svg .hole{fill:none;stroke:currentColor;stroke-width:1.6;transition:stroke .25s}
+.tabs [aria-pressed="true"] svg .fi{fill:currentColor}
+.tabs [aria-pressed="true"] svg .hole{stroke:var(--card);fill:var(--card)}
+.tabs [aria-pressed="true"] svg{transform:scale(1.04)}
+.tabs span{letter-spacing:.01em}
+.tabs .badge{top:3px;left:calc(50% + 9px)}
+/* ---- ícones ---- */
+.eico{width:20px;height:20px;flex:none}
+.eti{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border-radius:9px;background:var(--line);color:var(--ink)}
+.eti .eico{width:19px;height:19px}
+.eti.b{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.eti.g{background:color-mix(in srgb,var(--mute) 16%,transparent);color:var(--mute)}
+.etile{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:15px;background:var(--accent);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 30%,transparent)}
+.etile .eico{width:30px;height:30px}
+.etile.g{background:#8e8e93;box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.etile.w{background:var(--warn);color:var(--on-warn);box-shadow:0 6px 16px color-mix(in srgb,var(--warn) 35%,transparent)}
+.etile.r{background:var(--bad);box-shadow:0 6px 16px color-mix(in srgb,var(--bad) 30%,transparent)}
+.etile.ok{background:var(--good);box-shadow:0 6px 16px color-mix(in srgb,var(--good) 30%,transparent)}
+.etile.big2{width:72px;height:72px;border-radius:20px;margin:0 auto 14px}
+.etile.big2 .eico{width:40px;height:40px}
+.etop{display:flex;align-items:center;gap:14px;min-width:0}
+/* ---- painel de números: também é o filtro ---- */
+.estat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 2px}
+.est{display:grid;justify-items:start;gap:2px;padding:12px 12px 11px;border:0;border-radius:16px;background:var(--card);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:transform 90ms ease-out,box-shadow .2s ease-out,background-color .2s ease-out}
+.est:active{transform:scale(.97)}
+.est .eti{width:30px;height:30px;border-radius:50%;margin-bottom:6px}
+.est b{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.est small{font-size:13px;font-weight:600;color:var(--mute)}
+.est.b .eti{background:var(--accent);color:#fff}
+.est.g .eti{background:#8e8e93;color:#fff}
+.est.ok .eti{background:var(--good);color:#fff}
+.est.w .eti{background:var(--warn);color:var(--on-warn)}
+.est.r .eti{background:var(--bad);color:#fff}
+.est[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent) inset;background:color-mix(in srgb,var(--accent) 7%,var(--card))}
+.est.r[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bad) inset;background:color-mix(in srgb,var(--bad) 7%,var(--card))}
+.est.w[aria-pressed="true"]{box-shadow:0 0 0 2px var(--warn) inset;background:color-mix(in srgb,var(--warn) 9%,var(--card))}
+/* ---- lista ---- */
+.vest .search{margin-top:12px}
+#eField button{display:none}
+#eField.has button{display:block}
+.elbl{display:flex;align-items:center;gap:6px;margin:24px 4px 10px;font-size:13px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+.elbl .eico{width:16px;height:16px}
+.elbl.bad{color:var(--bad-ink)}
+.egrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ec{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-height:96px;padding:12px 12px 11px;border:0;border-radius:18px;background:var(--card);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:transform 90ms ease-out}
+.ec:active{transform:scale(.96)}
+.ect{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.ect b{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:.95;font-variant-numeric:tabular-nums}
+.ecm{display:flex;align-items:center;gap:5px;min-width:0;font-size:13px;font-weight:600;color:var(--mute)}
+.ecm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ecm .eico{width:16px;height:16px}
+.ec.in .ecm{color:var(--accent)}
+.ecs{position:absolute;left:12px;top:46px;font-size:12px;font-weight:700;letter-spacing:.01em}
+.ec.w,.ec.r{min-height:112px}
+.ec.w .ecm,.ec.r .ecm{margin-top:18px}
+.ec.w{background:color-mix(in srgb,var(--warn) 14%,var(--card));box-shadow:0 0 0 1.5px color-mix(in srgb,var(--warn) 65%,transparent) inset}
+.ec.w .ecs{color:var(--warn-ink)}
+.ec.r{background:color-mix(in srgb,var(--bad) 10%,var(--card));box-shadow:0 0 0 1.5px color-mix(in srgb,var(--bad) 65%,transparent) inset}
+.ec.r .ecs{color:var(--bad-ink)}
+.esel{display:grid;place-items:center;flex:none;width:20px;height:20px;border-radius:28%;font-style:normal;font-size:13px;font-weight:800;line-height:1;background:var(--warn);color:var(--on-warn)}
+.esel.r{background:var(--bad);color:#fff;border-radius:50%}
+.eempty{margin:44px 12px;text-align:center}
+.eempty h3{margin:0;font-size:20px;font-weight:700}
+.eempty p{margin:8px 0 18px;color:var(--mute);font-size:15px;line-height:1.45}
+/* ---- detalhe: linhas como nos Ajustes do iPhone ---- */
+#esheet .big{font-size:28px;line-height:1.1}
+.elist{margin-top:14px;background:var(--bg);border-radius:16px;overflow:hidden}
+.erow{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background-color .15s ease-out}
+.erow:last-child{border-bottom:0}
+.erow:active{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.erx{flex:1;display:grid;min-width:0}
+.erx small{font-size:13px;color:var(--mute);font-weight:500}
+.erx b{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.erow i{font-style:normal;font-size:15px;font-weight:600;color:var(--accent);white-space:nowrap}
+.erow[hidden]{display:none}
+#eQPick button{gap:7px}
+#eQPick .eico{width:18px;height:18px}
+#eActs{margin-top:16px}
+#eActs button{background:none;height:40px;font-size:15px}
+/* ---- peças com quantidade ---- */
+.qty{background:var(--card);border-radius:16px;overflow:hidden}
+.qrow{display:flex;align-items:center;gap:12px;min-height:58px;padding:0 10px 0 12px;border-bottom:1px solid var(--line);transition:background-color .2s ease-out}
+.qrow:last-child{border-bottom:0}
+.qrow .qn{flex:1;font-size:17px}
+.qrow.on{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.qrow.on .qn{font-weight:600}
+.qrow.on .eti{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.qrow output{min-width:28px;text-align:center;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--mute)}
+.qrow.on output{color:var(--ink)}
+.qb{width:38px;height:38px;border:0;border-radius:12px;background:var(--bg);color:var(--accent);font-size:22px;font-weight:500;line-height:1;cursor:pointer;transition:transform 90ms ease-out,opacity .15s}
+.qb:active{transform:scale(.9)}
+.qb:disabled{opacity:.35;cursor:default}
+@media (prefers-reduced-motion:reduce){.tabs svg,.tabs svg .fi,.est,.ec,.erow,.qrow,.qb{transition:none}.tabin{animation:none}}
+
+/* ---- cartão da esteira desenhada (v21) ---- */
+:root{--alu:#bfc5cc;--alu-d:#a3aab2;--lona:#2f8f68;--lona-hi:#5fc097;--rol:#8d959e;--roda:#d64545;--eixo:#3a3f45}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--alu:#8d949c;--alu-d:#6f767e;--lona:#2b8a63;--lona-hi:#55b88d;--rol:#5d646c;--eixo:#1c1f22}}
+:root[data-theme="dark"]{--alu:#8d949c;--alu-d:#6f767e;--lona:#2b8a63;--lona-hi:#55b88d;--rol:#5d646c;--eixo:#1c1f22}
+.ec{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:6px;min-height:0;padding:8px 8px 10px}
+.ec.w,.ec.r{min-height:0}
+.ec.w .ecm,.ec.r .ecm{margin-top:0}
+.conv{position:relative;display:block;height:70px;margin:0 2px}
+.cvsvg{position:absolute;left:0;right:0;bottom:0;width:100%;height:62px}
+.cvsvg .al{fill:var(--alu)}
+.cvsvg .al.d{fill:var(--alu-d)}
+.cvsvg .lona{fill:var(--lona)}
+.cvsvg .brilho{fill:var(--lona-hi);opacity:.55}
+.cvsvg .rol{fill:var(--rol)}
+.cvsvg .roda{fill:var(--roda)}
+.cvsvg .eixo{fill:var(--eixo)}
+/* a plaquinha: branca, borda preta arredondada, "ESTEIRA" sublinhado e o número grande */
+.placa{position:absolute;left:50%;top:0;transform:translateX(-50%);display:grid;justify-items:center;min-width:50px;padding:2px 7px 3px;box-sizing:border-box;background:#fbfbf8;color:#16181b;border:1.5px solid #16181b;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.14)}
+.placa small{font-size:7px;font-weight:800;letter-spacing:.06em;line-height:1.1;text-decoration:underline;text-underline-offset:1px}
+.placa b{font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.ec .esel{position:absolute;top:8px;right:8px}
+.ecm{justify-content:center}
+.ecs{position:static;text-align:center;margin-top:-3px}
+
+/* seleção na aba Esteiras: mesma linguagem das garras (as outras apagam, a escolhida acende e pulsa) */
+.ec{transition:transform 90ms ease-out,opacity .25s cubic-bezier(.2,.8,.2,1)}
+#eList.dim .ec:not(.on){opacity:.25}
+.ec.on{box-shadow:0 0 0 3px var(--accent),0 0 16px color-mix(in srgb,var(--accent) 55%,transparent);animation:pulse .9s ease 2}
+.ec.on.w,.ec.on.r{box-shadow:0 0 0 3px var(--accent),0 0 16px color-mix(in srgb,var(--accent) 55%,transparent)}
+@media (prefers-reduced-motion:reduce){.ec.on{animation:none}}
+
 </style>
 </head>
 <body>
@@ -329,13 +507,15 @@ footer .me button{padding:8px 12px}
   <h1>Garras</h1>
   <p id="sub"></p>
   <button type="button" class="alert" id="alertBtn" hidden><i class="mini">!</i><span><span id="alertTxt"></span></span><b aria-hidden="true">›</b></button>
+  <button type="button" class="alert nx" id="nextBtn" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span><span id="nextTxt"></span><small id="nextSub"></small></span><b aria-hidden="true">›</b></button>
 </header>
 
 <div class="search">
   <label class="field" id="field">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Número do molde ou nome" aria-label="Buscar garra pelo número do molde ou pelo nome">
+    <input id="q" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Molde ou nome" aria-label="Buscar garra pelo número do molde ou pelo nome">
     <button type="button" id="clear" aria-label="Limpar busca">×</button>
+    <button type="button" id="tBtn" aria-label="Próximas trocas: buscar pelo molde, máquina e hora"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Trocas</span><i id="tCount" hidden></i></button>
   </label>
   <div class="hits" id="hits"></div>
   <div class="note" id="note" aria-live="polite"></div>
@@ -347,12 +527,55 @@ footer .me button{padding:8px 12px}
   <div class="pane"></div><div class="pane"></div><div class="pane"></div>
 </section>
 
+<section class="vest" id="vEst" hidden aria-label="Esteiras">
+  <header>
+    <h1>Esteiras</h1>
+    <p id="eSub"></p>
+  </header>
+  <div class="estat" id="eStats" role="group" aria-label="Filtrar esteiras"></div>
+  <div class="search">
+    <label class="field" id="eField">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="eq" type="search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="Esteira ou máquina" aria-label="Buscar esteira pelo número ou pela máquina">
+      <button type="button" id="eClear" aria-label="Limpar busca">×</button>
+    </label>
+  </div>
+  <div id="eList"></div>
+</section>
+
 <footer>
   <button type="button" id="histBtn" class="big2">Histórico de alterações</button>
   <div class="me" id="me" hidden><span class="av" id="meAv" aria-hidden="true"></span><span><b id="meNome"></b><small id="meInfo"></small></span><button type="button" id="outBtn">Sair</button></div>
   <div id="localNote" hidden>As alterações feitas aqui ficam salvas só neste celular.</div>
   <button type="button" id="resetBtn" class="danger" hidden>Restaurar lista original</button>
 </footer>
+
+<nav class="tabs" id="tabs" aria-label="Seções">
+  <button type="button" data-tab="g" aria-pressed="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4h17"/><rect class="fi" x="8.5" y="2.2" width="7" height="4.2" rx="1.3"/><path d="M12 6.4v4.4"/><rect class="fi" x="7.5" y="10.8" width="9" height="2.6" rx="1"/><path d="M9 13.4v3.2c0 1.3.6 2.4 1.6 3.1"/><path d="M15 13.4v3.2c0 1.3-.6 2.4-1.6 3.1"/></svg><span>Garras</span><i class="badge" id="gBadge" hidden></i></button>
+  <button type="button" data-tab="e" aria-pressed="false"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="fi" x="9" y="4.5" width="6" height="5" rx="1.2"/><rect class="fi" x="2.5" y="10.5" width="19" height="5.6" rx="2.8"/><circle class="hole" cx="5.4" cy="13.3" r="1"/><circle class="hole" cx="18.6" cy="13.3" r="1"/><path d="M6.5 16.1v4M17.5 16.1v4"/></svg><span>Esteiras</span><i class="badge" id="eBadge" hidden></i></button>
+</nav>
+
+<button type="button" class="fab" id="eAdd" aria-label="Cadastrar esteira">+</button>
+
+<div class="sheet" id="esheet" aria-hidden="true">
+  <div class="in" role="dialog" aria-label="Detalhes da esteira">
+    <div class="grab"></div>
+    <div class="top">
+      <div class="etop"><span class="etile" id="eTile" aria-hidden="true"></span><div>
+        <div class="big" id="eNum"></div>
+        <div class="desc" id="eDesc"></div>
+      </div></div>
+      <button class="close" type="button" data-close aria-label="Fechar">×</button>
+    </div>
+    <div class="stc" id="eStat" hidden></div>
+    <div class="elist">
+      <button type="button" class="erow" id="eWhere"></button>
+      <button type="button" class="erow" id="eLast" hidden></button>
+    </div>
+    <div class="quick" id="eQuick"><span>Algum problema?</span><div class="pick q" id="eQPick"></div></div>
+    <div class="acts" id="eActs"><button type="button" id="eDel" class="danger">Remover esteira</button></div>
+  </div>
+</div>
 
 <div class="sheet" id="sheet" aria-hidden="true">
   <div class="in" role="dialog" aria-label="Detalhes da garra">
@@ -471,10 +694,81 @@ footer .me button{padding:8px 12px}
   </form>
 </div>
 
+<div class="modal" id="erep" aria-hidden="true">
+  <form id="erf" novalidate>
+    <div class="bar"><button type="button" id="erCancel">Cancelar</button><strong>Reportar problema</strong><button type="submit" class="pri">Salvar</button></div>
+    <div class="rhead etop"><span class="etile" id="erTile" aria-hidden="true"></span><div><div class="big" id="erNum"></div><div class="desc" id="erDesc"></div></div></div>
+    <h5 class="lbl">O que aconteceu?</h5>
+    <div class="pick" id="erPick"></div>
+    <p class="err inl" id="erErr" role="alert"></p>
+    <div class="reveal" id="erOther"><div>
+      <div class="group" id="erObG"><label for="erOb" class="full"><input id="erOb" maxlength="140" autocomplete="off" placeholder="Descreva o problema" aria-label="Qual é o problema"></label></div>
+      <p class="err inl" id="erErr2" role="alert"></p>
+    </div></div>
+    <h5 class="lbl">Pode usar a esteira?</h5>
+    <div class="seg" id="erSev" data-v="w"><span class="segpill" aria-hidden="true"></span><button type="button" data-v="w">Com atenção</button><button type="button" data-v="r">Não usar</button></div>
+    <p class="help"><span id="erSevHelp"></span></p>
+  </form>
+</div>
+
+<div class="modal" id="efix" aria-hidden="true">
+  <form id="exf" novalidate>
+    <div class="bar"><button type="button" id="exCancel">Cancelar</button><strong>Conserto</strong><span></span></div>
+    <div class="rhead etop"><span class="etile" id="exTile" aria-hidden="true"></span><div><div class="big" id="exNum"></div><div class="desc" id="exDesc"></div></div></div>
+    <div class="stc" id="exStat"></div>
+    <h5 class="lbl">Peças usadas</h5>
+    <div class="qty" id="exQty"></div>
+    <div class="reveal" id="exOther"><div>
+      <div class="group" id="exOG"><label for="exOb" class="full"><input id="exOb" maxlength="60" autocomplete="off" placeholder="Qual peça?" aria-label="Qual outra peça"></label></div>
+      <p class="err inl" id="exErr" role="alert"></p>
+    </div></div>
+    <p class="help">Se não trocou nenhuma peça, é só confirmar.</p>
+    <button type="submit" class="cta ok">Confirmar conserto</button>
+  </form>
+</div>
+
+<div class="modal" id="emaq" aria-hidden="true">
+  <form id="emf" novalidate>
+    <div class="bar"><button type="button" id="emCancel">Cancelar</button><strong id="emTitle">Onde está?</strong><button type="submit" class="pri">Salvar</button></div>
+    <div class="group" id="emg"><label for="emQ">Máquina<input id="emQ" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Ex.: 31"></label></div>
+    <p class="err inl" id="emErr" role="alert"></p>
+    <p class="help">As esteiras mudam de máquina. Atualize sempre que levar a esteira para outro robô.</p>
+    <button type="button" class="cta sec" id="emOff">Tirar da máquina (guardada)</button>
+  </form>
+</div>
+
+<div class="modal" id="enew" aria-hidden="true">
+  <form id="enf" novalidate>
+    <div class="bar"><button type="button" id="enCancel">Cancelar</button><strong>Nova esteira</strong><button type="submit" class="pri">Salvar</button></div>
+    <div class="group" id="eng"><label for="enN">Número<input id="enN" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="Ex.: 26"></label></div>
+    <p class="err inl" id="enErr" role="alert"></p>
+    <p class="help">Use o mesmo número da plaquinha da esteira.</p>
+  </form>
+</div>
+
 <div class="modal" id="alerts" aria-hidden="true">
   <div class="hl">
     <div class="bar"><button type="button" id="aClose">Fechar</button><strong>Precisam de reparo</strong><span></span></div>
     <div id="aList"></div>
+  </div>
+</div>
+
+<div class="modal" id="trocas" aria-hidden="true">
+  <div class="hl">
+    <div class="bar"><button type="button" id="tClose">Fechar</button><strong>Próximas trocas</strong><span></span></div>
+    <form id="tf" novalidate>
+      <div class="group" id="tg">
+        <label for="tN">Molde<input id="tN" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Ex.: 846" enterkeyhint="next"></label>
+        <label for="tQ">Máquina<input id="tQ" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Ex.: 31" enterkeyhint="next"></label>
+        <label for="tH">Hora<input id="tH" type="time" aria-describedby="tHelp"></label>
+      </div>
+      <p class="help" id="tHelp">Hora é opcional. Use a mesma do painel de próximas trocas.</p>
+      <div class="tprev" id="tPrev" aria-live="polite"></div>
+      <p class="err inl" id="tErr" role="alert"></p>
+      <button type="submit" class="cta" id="tGo">Adicionar troca</button>
+    </form>
+    <div id="tList"></div>
+    <p class="help tfoot">Quando a integração com o sistema da fábrica for liberada, esta lista se preenche sozinha.</p>
   </div>
 </div>
 
@@ -619,6 +913,61 @@ function pessoaPorEmail(e){
   return null;
 }
 
+/* ---- próximas trocas ----
+   Hoje cada troca é digitada no app (molde, máquina e hora). O formato é o mesmo que o painel
+   "Próximas trocas" da fábrica mostra, para que uma futura integração só precise preencher esta lista. */
+var TROCA_JANELA = 60 * 60 * 1000, TROCA_SEM_HORA = 24 * 60 * 60 * 1000;
+function cleanTroca(x, id){
+  x = x && typeof x === 'object' ? x : {};
+  var n = Math.floor(+x.n);
+  return { id: String(id || x.id || '').replace(/[^\w-]/g, '').slice(0, 40), n: n > 0 && n < 1e6 ? n : 0,
+    q: cStr(x.q, 20), h: cInt(x.h, 0, 9e15), by: cStr(x.by, LIM.who), c: cInt(x.c, 0, 9e15) };
+}
+/* "06:35" vira hoje às 06:35; se esse horário já passou há mais de 1 hora, é a troca de amanhã */
+function horaTroca(v, agora){
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(v || '')); if (!m || +m[1] > 23 || +m[2] > 59) return 0;
+  var d = new Date(agora); d.setHours(+m[1], +m[2], 0, 0);
+  if (d.getTime() < agora - TROCA_JANELA) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+/* continua na lista até 1 hora depois do horário; sem hora, por 24 horas */
+function trocaViva(t, agora){ return t.n > 0 && (t.h ? t.h > agora - TROCA_JANELA : t.c > agora - TROCA_SEM_HORA); }
+function ordemTrocas(a, b){ return (a.h || 9e15) - (b.h || 9e15) || a.c - b.c; }
+/* garras daquele molde */
+function garrasDoMolde(n){ return D.filter(function(m){ return m.n.indexOf(n) >= 0; }); }
+function quandoTroca(t, agora){
+  if (!t.h) return { hora: '—', rel: 'sem hora' };
+  var d = new Date(t.h), min = Math.round((t.h - agora) / 60000), hj = new Date(agora);
+  var amanha = d.getDate() !== hj.getDate();
+  var rel = min < -1 ? 'há ' + (-min) + ' min' : min <= 1 ? 'agora' : min < 60 ? 'em ' + min + ' min' : 'em ' + Math.floor(min / 60) + ' h' + (min % 60 ? ' ' + String(min % 60).padStart(2, '0') : '');
+  return { hora: (amanha ? 'amanhã ' : '') + hm(d), rel: rel, atraso: min < -1 };
+}
+
+/* ---- esteiras ----
+   Identificadas pela plaquinha ("ESTEIRA 17"). Não são fixas: mudam de máquina conforme a produção. */
+var EPR = { ps: 'Parafuso solto', nl: 'Esteira não liga', rs: 'Roda solta', pf: 'Perfil solto', o: 'Outro' };
+/* peças do conserto, com plural para o histórico ("2 parafusos, 1 porca") */
+var EPC = { pa: ['Parafuso', 'parafusos'], po: ['Porca', 'porcas'], ca: ['Cantoneira', 'cantoneiras'], ro: ['Roda', 'rodas'], pe: ['Perfil', 'perfis'], lo: ['Lona', 'lonas'], ou: ['Outra peça', 'outras peças'] };
+var E = [];
+function cleanEst(x, id){
+  x = x && typeof x === 'object' ? x : {};
+  var n = Math.floor(+x.n), st = x.st === 'w' || x.st === 'r' ? x.st : '';
+  return { id: String(id || x.id || ('e' + n)).replace(/[^\w-]/g, '').slice(0, 10), n: n > 0 && n < 1000 ? n : 0,
+    q: cStr(x.q, 20), st: st, pr: st && Array.isArray(x.pr) ? x.pr.filter(function(k){ return k in EPR; }).slice(0, 8) : [],
+    ob: st ? cStr(x.ob, LIM.ob) : '', sb: cStr(x.sb, LIM.who), sa: cInt(x.sa, 0, 9e15), by: cStr(x.by, LIM.who), at: cInt(x.at, 0, 9e15) };
+}
+function estFields(e){ return { n: e.n, q: e.q, st: e.st, pr: e.pr.slice(), ob: e.ob, sb: e.sb, sa: e.sa, by: e.by, at: e.at }; }
+function ordemEst(a, b){ return a.n - b.n; }
+function estNomes(e){ return e.pr.filter(function(k){ return k !== 'o' || !e.ob; }).map(function(k){ return EPR[k]; }); }
+/* "2 parafusos, 1 porca" */
+function pecasTexto(qt, outra){
+  return Object.keys(EPC).filter(function(k){ return qt[k] > 0; }).map(function(k){
+    var nome = k === 'ou' && outra ? outra.toLowerCase() : (qt[k] > 1 ? EPC[k][1] : EPC[k][0].toLowerCase());
+    return qt[k] + ' ' + nome;
+  }).join(', ');
+}
+function estMaq(e){ return e.q ? 'Máq. ' + e.q : 'Guardada'; }
+
 /* GAVETA DADOS: memória do celular e sincronização com o Firebase. */
 
 var BASE = /*DATA*/[];
@@ -712,6 +1061,85 @@ function applyShelves(){ var set = {}; remoteList.forEach(function(k){ set[k] = 
 
 function setReady(){ ready = got.m && got.c; document.body.classList.toggle('wait', !ready); }
 
+/* ---- próximas trocas: na nuvem, todos os celulares veem a mesma lista; na prévia, fica no celular ---- */
+var TR = [], TRK = 'garras-trocas', trErro = '', trApagando = {};
+function trocasLocais(){
+  try { var l = JSON.parse(localStorage.getItem(TRK) || '[]'); return Array.isArray(l) ? l.map(function(x){ return cleanTroca(x, x.id); }) : []; } catch (e) { return []; }
+}
+function salvarTrocasLocais(){ try { localStorage.setItem(TRK, JSON.stringify(TR)); } catch (e) {} }
+function addTroca(t){
+  if (!CLOUD){ TR.push(t); salvarTrocasLocais(); updateTrocas(); return; }
+  if (!db) return;
+  db.collection('trocas').doc(t.id).set({ n: t.n, q: t.q, h: t.h, by: t.by, c: t.c }).catch(function(er){
+    toast(er && er.code === 'permission-denied' ? 'Sem permissão para salvar trocas.' : 'Não foi possível salvar a troca.');
+  });
+}
+function delTroca(id){
+  if (!CLOUD){ TR = TR.filter(function(t){ return t.id !== id; }); salvarTrocasLocais(); updateTrocas(); return; }
+  if (!db || trApagando[id]) return;
+  trApagando[id] = 1;
+  db.collection('trocas').doc(id).delete().catch(function(){ delete trApagando[id]; });
+}
+if (!CLOUD) TR = trocasLocais();
+
+/* ---- esteiras: mesma ideia das garras. Na nuvem, todos veem a mesma lista; na prévia, fica no celular ---- */
+var EK = 'garras-esteiras', eErro = '', eGot = false;
+function estLocais(){
+  try { var l = JSON.parse(localStorage.getItem(EK) || '[]'); return Array.isArray(l) ? l.map(function(x){ return cleanEst(x, x.id); }).filter(function(e){ return e.n; }) : []; } catch (e) { return []; }
+}
+function salvarEstLocais(){ try { localStorage.setItem(EK, JSON.stringify(E)); } catch (e) {} }
+function estById(id){ for (var i = 0; i < E.length; i++) if (E[i].id === id) return E[i]; return null; }
+/* grava os campos de uma esteira. Com base (aviso), confere no servidor se ninguém mudou o aviso antes */
+function estGrava(e, w, base, depois){
+  Object.assign(e, w);
+  if (!CLOUD){ salvarEstLocais(); refreshEst(); if (depois) depois(); return; }
+  refreshEst();
+  if (!db) return;
+  var ref = db.collection('esteiras').doc(e.id);
+  /* se o servidor recusar, a tela volta para o que está na nuvem */
+  var simples = function(){ return ref.set(w, { merge: true }).catch(function(er){ estErr(er); ref.get().then(function(d){ if (d.exists) Object.assign(e, cleanEst(d.data(), e.id)); refreshEst(); }); }); };
+  var feito = function(){ if (depois) depois(); };
+  if (base === undefined || !db.runTransaction || !navigator.onLine){ simples(); feito(); return; }
+  db.runTransaction(function(tx){
+    return tx.get(ref).then(function(d){
+      if (!d.exists) throw { code: 'sumiu' };
+      if (cleanEst(d.data(), e.id).sa !== base) throw { code: 'conflito' };
+      tx.set(ref, w, { merge: true });
+    });
+  }).then(feito, function(er){
+    if (er && (er.code === 'conflito' || er.code === 'sumiu')){
+      ref.get().then(function(d){ if (d.exists) Object.assign(e, cleanEst(d.data(), e.id)); else E = E.filter(function(x){ return x !== e; }); refreshEst(); });
+      toast(er.code === 'sumiu' ? 'Esta esteira foi removida em outro celular.' : 'Outro celular mudou o aviso desta esteira agora. Confira e tente de novo.');
+    } else { simples(); feito(); }
+  });
+}
+function estErr(er){ toast(er && er.code === 'permission-denied' ? 'Sem permissão para essa alteração.' : 'Não foi possível salvar a esteira.'); }
+function estCria(lista){
+  lista.forEach(function(e){ if (!estById(e.id)) E.push(e); });
+  E.sort(ordemEst);
+  if (!CLOUD){ salvarEstLocais(); refreshEst(); return; }
+  refreshEst();
+  if (!db) return;
+  var b = db.batch(); lista.forEach(function(e){ b.set(db.collection('esteiras').doc(e.id), estFields(e)); });
+  b.commit().catch(function(er){ var ids = {}; lista.forEach(function(e){ ids[e.id] = 1; }); E = E.filter(function(e){ return !ids[e.id]; }); refreshEst(); estErr(er); });
+}
+function estApaga(e){
+  E = E.filter(function(x){ return x !== e; });
+  if (!CLOUD){ salvarEstLocais(); refreshEst(); return; }
+  refreshEst();
+  if (db) db.collection('esteiras').doc(e.id).delete().catch(function(er){
+    if (!estById(e.id)){ E.push(e); E.sort(ordemEst); refreshEst(); }
+    estErr(er);
+  });
+}
+/* histórico das esteiras: mesma coleção das garras, com id "e17" */
+function logE(a, e, x){
+  var h = cleanHist({ t: Date.now(), q: NAME || 'Sem nome', a: a, id: e.id, m: e.nome || 'Esteira ' + e.n, d: '', x: x || '' });
+  if (CLOUD){ if (db){ var fv = firebase.firestore.FieldValue, doc = Object.assign({}, h); if (fv) doc.ts = fv.serverTimestamp(); db.collection('historico').add(doc).catch(cloudErr); } return; }
+  try { var l = JSON.parse(localStorage.getItem(HKEY)) || []; l.unshift(h); localStorage.setItem(HKEY, JSON.stringify(l.slice(0, 300))); } catch (er) {}
+}
+if (!CLOUD){ E = estLocais(); eGot = true; }
+
 function cloudErr(e){
   var c = e && e.code || '';
   $('note').textContent = c === 'permission-denied' ? 'Sem permissão para acessar a lista. Confira as regras do Firebase.' : 'Erro de sincronização' + (c ? ' (' + c + ').' : '.');
@@ -738,6 +1166,14 @@ function listen(){
     if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } }
     renderShelves(); renderBoard(); search(); foot();
   }, cloudErr));
+  unsub.push(db.collection('esteiras').onSnapshot(function(snap){
+    var l = []; snap.forEach(function(d){ var e = cleanEst(d.data(), d.id); if (e.n) l.push(e); });
+    E = l.sort(ordemEst); eErro = ''; eGot = true; refreshEst();
+  }, function(e){ E = []; eGot = true; eErro = e && e.code === 'permission-denied' ? 'As esteiras ainda não foram liberadas nas regras do Firebase.' : 'Não foi possível carregar as esteiras.'; refreshEst(); }));
+  unsub.push(db.collection('trocas').onSnapshot(function(snap){
+    var l = []; snap.forEach(function(d){ l.push(cleanTroca(d.data(), d.id)); });
+    TR = l; trErro = ''; updateTrocas();
+  }, function(e){ TR = []; trErro = e && e.code === 'permission-denied' ? 'As trocas ainda não foram liberadas nas regras do Firebase.' : 'Não foi possível carregar as trocas.'; updateTrocas(); }));
   unsub.push(db.collection('config').doc('geral').onSnapshot(function(d){
     var x = d.exists ? d.data() : {}, l = cleanShelves(x.list); cfgList = l.length > 0; remoteList = l.length ? l : seq(cInt(x.shelves, 1, 999) || 12);
     got.c = true; setReady(); applyShelves(); renderShelves(); renderBoard(); search();
@@ -745,7 +1181,7 @@ function listen(){
 }
 
 function stopListen(){
-  unsub.forEach(function(f){ f(); }); unsub = []; got = { m: false, c: false }; lastSig = ''; remote = {}; D = [];
+  unsub.forEach(function(f){ f(); }); unsub = []; got = { m: false, c: false }; lastSig = ''; remote = {}; D = []; TR = []; trErro = ''; E = []; eErro = ''; eGot = false;
   selected = null; index(); setReady(); renderShelves(); renderBoard();
 }
 
@@ -889,8 +1325,11 @@ var navKey = '';
 var chipGeo = null, navW = 0;
 function geo(){
   if (!chipGeo){
-    var nav = $('shelves'); chipGeo = {}; navW = nav.clientWidth;
-    Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ chipGeo[b.dataset.s] = { x: b.offsetLeft, w: b.offsetWidth }; });
+    var nav = $('shelves'), g = {}; navW = nav.clientWidth;
+    Array.prototype.forEach.call(nav.querySelectorAll('button[data-s]'), function(b){ g[b.dataset.s] = { x: b.offsetLeft, w: b.offsetWidth }; });
+    /* com a aba Esteiras aberta tudo mede zero: não guarda, mede de novo quando aparecer */
+    if (!navW) return g;
+    chipGeo = g;
   }
   return chipGeo;
 }
@@ -1079,7 +1518,8 @@ function open(m){
 
 function closeSheets(){
   selected = null;
-  ['sheet', 'menu', 'ask'].forEach(function(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden', 'true'); });
+  eSel = null; if ($('eList')) markEst(false);
+  ['sheet', 'menu', 'ask', 'esheet'].forEach(function(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden', 'true'); });
   mark();
 }
 
@@ -1122,7 +1562,7 @@ var GAP = 16, U = 0, X = 0, drag = null, anim = null, peek = null, swipeT = -1e9
 
 function tx(el, x){ el.style.transform = 'translate3d(' + x + 'px,0,0)'; }
 
-function measure(){ U = board.clientWidth + GAP; }
+function measure(){ var w = board.clientWidth; if (w) U = w + GAP; }
 
 function place(){ for (var k = 0; k < 3; k++) PN[k].style.transform = 'translate3d(' + ((k - 1) * U + X) + 'px,0,0)'; }
 
@@ -1475,12 +1915,14 @@ function updateAlert(){
   var b = $('alertBtn'), r = 0, w = 0;
   D.forEach(function(m){ if (m.st === 'r') r++; else if (m.st === 'w') w++; });
   var n = r + w;
-  if (!n || (CLOUD && !ready)){ b.hidden = true; if ($('alerts').classList.contains('open')) drawAlerts(); return; }
+  var gb = $('gBadge'); gb.hidden = !n || (CLOUD && !ready); gb.textContent = n; gb.classList.toggle('r', r > 0);
+  if (!n || (CLOUD && !ready)){ b.hidden = true; if ($('alerts').classList.contains('open')) drawAlerts(); updateTrocas(); return; }
   var t = n + (n === 1 ? ' garra precisa' : ' garras precisam') + ' de reparo';
   b.classList.toggle('r', r > 0); b.querySelector('.mini').className = 'mini' + (r ? ' r' : '');
   if (b.hidden){ b.hidden = false; $('alertTxt').textContent = t; b.classList.remove('in'); void b.offsetWidth; b.classList.add('in'); }
   else swapText($('alertTxt'), t);
   if ($('alerts').classList.contains('open')) drawAlerts();
+  updateTrocas();
 }
 
 function drawAlerts(){
@@ -1499,6 +1941,454 @@ function drawAlerts(){
 }
 
 $('alertBtn').addEventListener('click', function(){ closeSheets(); drawAlerts(); openModal('alerts'); });
+
+/* ícones no estilo SF Symbols (grade 24, traço 1.8): cada problema e cada peça tem o seu desenho */
+var EICO = {"garra": "<path d=\"M3.5 4h17\"/><rect class=\"fi\" x=\"8.5\" y=\"2.2\" width=\"7\" height=\"4.2\" rx=\"1.3\"/><path d=\"M12 6.4v4.4\"/><rect class=\"fi\" x=\"7.5\" y=\"10.8\" width=\"9\" height=\"2.6\" rx=\"1\"/><path d=\"M9 13.4v3.2c0 1.3.6 2.4 1.6 3.1\"/><path d=\"M15 13.4v3.2c0 1.3-.6 2.4-1.6 3.1\"/>", "esteira": "<rect class=\"fi\" x=\"9\" y=\"4.5\" width=\"6\" height=\"5\" rx=\"1.2\"/><rect class=\"fi\" x=\"2.5\" y=\"10.5\" width=\"19\" height=\"5.6\" rx=\"2.8\"/><circle class=\"hole\" cx=\"5.4\" cy=\"13.3\" r=\"1\"/><circle class=\"hole\" cx=\"18.6\" cy=\"13.3\" r=\"1\"/><path d=\"M6.5 16.1v4M17.5 16.1v4\"/>", "caixa": "<rect x=\"3.5\" y=\"4\" width=\"17\" height=\"4.5\" rx=\"1.2\"/><path d=\"M5 8.5v9.2c0 .7.6 1.3 1.3 1.3h11.4c.7 0 1.3-.6 1.3-1.3V8.5\"/><path d=\"M10 12.5h4\"/>", "chave": "<path d=\"M14.7 6.3a4.2 4.2 0 0 0-5.6 5.3L3.8 16.9a1.6 1.6 0 0 0 2.3 2.3l5.3-5.3a4.2 4.2 0 0 0 5.3-5.6l-2.6 2.6-2.2-.4-.4-2.2z\"/>", "relogio": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>", "ps": "<rect x=\"8\" y=\"3\" width=\"8\" height=\"3.4\" rx=\"1.2\"/><path d=\"M10 6.4v11l2 2.6 2-2.6v-11\"/><path d=\"M10 9.6l4 1.4M10 12.6l4 1.4M10 15.6l4 1.2\"/>", "nl": "<path d=\"M12 3.5v7.5\"/><path d=\"M7.2 6.6a7.5 7.5 0 1 0 9.6 0\"/>", "rs": "<path d=\"M8.5 3.5h7\"/><path d=\"M12 3.5v3.2\"/><path d=\"M9.2 6.7h5.6\"/><circle cx=\"12\" cy=\"14.5\" r=\"5.5\"/><circle cx=\"12\" cy=\"14.5\" r=\"1.6\"/>", "pf": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M10 4v3h4V4M20 10h-3v4h3M14 20v-3h-4v3M4 14h3v-4H4\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/>", "o": "<circle cx=\"6\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18\" cy=\"12\" r=\"1.3\"/>", "pa": "<rect x=\"8\" y=\"3\" width=\"8\" height=\"3.4\" rx=\"1.2\"/><path d=\"M10 6.4v11l2 2.6 2-2.6v-11\"/><path d=\"M10 9.6l4 1.4M10 12.6l4 1.4M10 15.6l4 1.2\"/>", "po": "<path d=\"M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6z\"/><circle cx=\"12\" cy=\"12\" r=\"3.2\"/>", "ca": "<path d=\"M5 4.5h4.2v10.3h10.3V19H6.2A1.2 1.2 0 0 1 5 17.8z\"/><circle cx=\"7.1\" cy=\"9\" r=\"1\"/><circle cx=\"14.5\" cy=\"16.9\" r=\"1\"/>", "ro": "<path d=\"M8.5 3.5h7\"/><path d=\"M12 3.5v3.2\"/><path d=\"M9.2 6.7h5.6\"/><circle cx=\"12\" cy=\"14.5\" r=\"5.5\"/><circle cx=\"12\" cy=\"14.5\" r=\"1.6\"/>", "pe": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M10 4v3h4V4M20 10h-3v4h3M14 20v-3h-4v3M4 14h3v-4H4\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/>", "lo": "<rect x=\"2.5\" y=\"8.5\" width=\"19\" height=\"7\" rx=\"3.5\"/><circle cx=\"6\" cy=\"12\" r=\"1.2\"/><circle cx=\"18\" cy=\"12\" r=\"1.2\"/><path d=\"M9.5 8.5h5\"/>", "ou": "<circle cx=\"6\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18\" cy=\"12\" r=\"1.3\"/>"};
+function eico(k, cls){ return '<svg class="' + (cls || 'eico') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (EICO[k] || '') + '</svg>'; }
+
+/* ===================== ESTEIRAS ===================== */
+/* abas: Garras e Esteiras. A aba escolhida fica lembrada neste celular */
+var TAB = 'g';
+try { if (localStorage.getItem('garras-aba') === 'e') TAB = 'e'; } catch (e) {}
+
+function setTab(t, anim){
+  if (t !== 'e') t = 'g';
+  var mudou = t !== TAB; TAB = t;
+  try { localStorage.setItem('garras-aba', t); } catch (e) {}
+  closeSheets();
+  document.body.classList.toggle('te', t === 'e');
+  $('vEst').hidden = t !== 'e';
+  Array.prototype.forEach.call($('tabs').children, function(b){ b.setAttribute('aria-pressed', String(b.dataset.tab === t)); });
+  if (t === 'e') drawEst();
+  else { chipGeo = null; measure(); place(); fit(); renderShelves(); }
+  if (mudou && anim){
+    var v = t === 'e' ? $('vEst') : $('board');
+    v.classList.remove('tabin'); void v.offsetWidth; v.classList.add('tabin');
+    window.scrollTo(0, 0);
+  }
+}
+
+$('tabs').addEventListener('click', function(e){
+  var b = e.target.closest('[data-tab]'); if (!b) return;
+  if (b.dataset.tab === TAB){ window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (document.activeElement) document.activeElement.blur();
+  setTab(b.dataset.tab, true);
+});
+
+/* desenha a lista; chamado sempre que a nuvem ou o celular mudam alguma esteira */
+function refreshEst(){
+  var prob = E.filter(function(e){ return e.st; }).length, bd = $('eBadge');
+  bd.hidden = !prob; bd.textContent = prob;
+  bd.classList.toggle('r', E.some(function(e){ return e.st === 'r'; }));
+  if (TAB === 'e') drawEst();
+  if (eSel && $('esheet').classList.contains('open')){ var x = estById(eSel.id); if (x) openEst(x, true); else closeSheets(); }
+}
+
+/* desenho da esteira, fiel à do setor: lona verde com roletes, estrutura de perfil de alumínio,
+   rodinhas vermelhas e a plaquinha branca "ESTEIRA" com o número (o número vai em HTML, por cima) */
+var ESTEIRA_ARTE = '<svg class="cvsvg" viewBox="0 0 100 66" aria-hidden="true">' +
+  '<rect class="al" x="15" y="41" width="3.4" height="19" rx="1"/><rect class="al" x="81.6" y="41" width="3.4" height="19" rx="1"/>' +
+  '<rect class="al d" x="15" y="50" width="70" height="2.6" rx="1"/>' +
+  '<rect class="al" x="5" y="38.5" width="90" height="4" rx="1.4"/>' +
+  '<rect class="lona" x="3" y="29" width="94" height="10.5" rx="5.25"/><rect class="brilho" x="9" y="30.4" width="82" height="1.6" rx=".8"/>' +
+  '<circle class="rol" cx="8.3" cy="34.25" r="3.1"/><circle class="rol" cx="91.7" cy="34.25" r="3.1"/>' +
+  '<circle class="roda" cx="16.7" cy="61.4" r="4.1"/><circle class="eixo" cx="16.7" cy="61.4" r="1.4"/>' +
+  '<circle class="roda" cx="83.3" cy="61.4" r="4.1"/><circle class="eixo" cx="83.3" cy="61.4" r="1.4"/></svg>';
+
+/* cartão: a esteira desenhada com a plaquinha (número), selo de estado (forma + cor + palavra) e onde está */
+function eCard(e){
+  var est = e.st === 'r' ? 'Não usar' : e.st === 'w' ? 'Atenção' : '';
+  return '<button type="button" class="ec' + (e.st ? ' ' + e.st : '') + (e.q ? ' in' : '') + '" data-e="' + esc(e.id) + '" aria-label="Esteira ' + e.n + ', ' + esc(e.q ? 'na máquina ' + e.q : 'guardada') + (est ? ', ' + est.toLowerCase() : '') + '">' +
+    '<span class="conv">' + ESTEIRA_ARTE + '<span class="placa"><small>ESTEIRA</small><b>' + e.n + '</b></span></span>' +
+    (est ? '<i class="esel ' + e.st + '" aria-hidden="true">!</i>' : '') +
+    '<span class="ecm">' + eico(e.q ? 'garra' : 'caixa') + '<span>' + esc(e.q ? 'Máq. ' + e.q : 'Guardada') + '</span></span>' +
+    (est ? '<span class="ecs">' + est + '</span>' : '') + '</button>';
+}
+
+/* filtro pelos números do topo: tocar de novo tira o filtro */
+var eFil = '';
+var EFIL = {
+  maq: { t: 'Em máquina', i: 'garra', f: function(e){ return !!e.q; } },
+  gua: { t: 'Guardadas', i: 'caixa', f: function(e){ return !e.q; } },
+  rep: { t: 'Reparo', i: 'chave', f: function(e){ return !!e.st; } }
+};
+
+function drawStats(){
+  var c = { maq: 0, gua: 0, rep: 0 }, r = false;
+  E.forEach(function(e){ if (e.q) c.maq++; else c.gua++; if (e.st){ c.rep++; if (e.st === 'r') r = true; } });
+  $('eStats').hidden = !E.length;
+  $('eStats').innerHTML = Object.keys(EFIL).map(function(k){
+    var cor = k === 'rep' ? (c.rep ? (r ? ' r' : ' w') : ' ok') : k === 'maq' ? ' b' : ' g';
+    return '<button type="button" class="est' + cor + '" data-f="' + k + '" aria-pressed="' + (eFil === k) + '">' +
+      '<span class="eti">' + eico(k === 'rep' && !c.rep ? 'chave' : EFIL[k].i) + '</span><b>' + c[k] + '</b><small>' + EFIL[k].t + '</small></button>';
+  }).join('');
+}
+
+function eHead(txt, ic, cls){ return '<h5 class="elbl' + (cls ? ' ' + cls : '') + '">' + (ic ? eico(ic) : '') + '<span>' + txt + '</span></h5>'; }
+
+function drawEst(){
+  var l = $('eList'), q = $('eq').value.trim().toLowerCase().replace(/^m[aá]q\.?\s*/, '');
+  var emUso = E.filter(function(e){ return e.q; }).length;
+  $('eSub').textContent = E.length ? E.length + (E.length === 1 ? ' esteira' : ' esteiras') + ' no setor' : '';
+  $('eField').classList.toggle('has', !!q);
+  drawStats();
+  if (eErro){ l.innerHTML = '<p class="hempty">' + esc(eErro) + '</p>'; return; }
+  if (CLOUD && !eGot){ l.innerHTML = '<p class="hempty">Carregando…</p>'; return; }
+  if (!E.length){
+    l.innerHTML = '<div class="eempty"><span class="etile big2" aria-hidden="true">' + eico('esteira') + '</span><h3>Nenhuma esteira cadastrada</h3>' +
+      (LIDER ? '<p>Cadastre as 25 de uma vez. Depois dá para adicionar ou remover uma a uma.</p><button type="button" class="cta" id="eSeed">Cadastrar as esteiras 1 a 25</button>'
+             : '<p>O líder cadastra as esteiras. Assim que ele fizer, elas aparecem aqui.</p>') + '</div>';
+    return;
+  }
+  var vis = E.filter(function(e){ return !eFil || EFIL[eFil].f(e); });
+  if (q) vis = vis.filter(function(e){ return String(e.n) === q || String(e.n).indexOf(q) === 0 || (e.q && e.q.toLowerCase().indexOf(q) >= 0); });
+  if (q || eFil){
+    var t = eFil ? EFIL[eFil].t : 'Resultado';
+    l.innerHTML = vis.length ? eHead(t + ' · ' + vis.length, eFil ? EFIL[eFil].i : 'esteira') + '<div class="egrid">' + vis.map(eCard).join('') + '</div>'
+      : '<p class="hempty">' + (q ? 'Nenhuma esteira com “' + esc(q) + '”' + (eFil ? ' em ' + EFIL[eFil].t.toLowerCase() : '') + '.' : eFil === 'rep' ? 'Nenhuma esteira precisa de reparo.<br>Tudo pronto para uso.' : 'Nenhuma esteira aqui.') + '</p>';
+    return;
+  }
+  var prob = E.filter(function(e){ return e.st; }).sort(function(a, b){ return (a.st === b.st ? 0 : a.st === 'r' ? -1 : 1) || b.sa - a.sa; });
+  var html = prob.length ? eHead('Precisam de reparo · ' + prob.length, 'chave', 'bad') + '<div class="egrid">' + prob.map(eCard).join('') + '</div>' : '';
+  html += eHead('Todas · ' + E.length, 'esteira') + '<div class="egrid">' + E.map(eCard).join('') + '</div>';
+  l.innerHTML = html;
+  if (eSel) markEst(false);
+}
+
+$('eStats').addEventListener('click', function(e){
+  var b = e.target.closest('[data-f]'); if (!b) return;
+  eFil = eFil === b.dataset.f ? '' : b.dataset.f;
+  drawEst();
+  var g = $('eList'); g.classList.remove('tabin'); void g.offsetWidth; g.classList.add('tabin');
+});
+
+$('eq').addEventListener('input', drawEst);
+$('eq').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); $('eq').blur(); } });
+$('eClear').addEventListener('click', function(){ $('eq').value = ''; $('eq').blur(); drawEst(); });
+
+$('eList').addEventListener('click', function(e){
+  if (e.target.closest('#eSeed')){
+    if (!LIDER) return;
+    var agora = Date.now(), l = [];
+    for (var n = 1; n <= 25; n++) l.push(cleanEst({ n: n, by: NAME, at: agora }, 'e' + n));
+    estCria(l);
+    logE('addn', { id: 'e0', nome: 'Esteiras 1 a 25' });
+    toast('25 esteiras cadastradas');
+    return;
+  }
+  var b = e.target.closest('[data-e]'); if (!b) return;
+  $('eq').blur();
+  var x = estById(b.dataset.e); if (x) openEst(x);
+});
+
+/* ---- detalhe da esteira ---- */
+var eSel = null;
+
+function estStatusHtml(e){
+  var nomes = estNomes(e);
+  return '<h4><i class="mini ' + e.st + '" aria-hidden="true">!</i>' + (e.st === 'r' ? 'Não usar · precisa de reparo' : 'Atenção · precisa de reparo') + '</h4>' +
+    (nomes.length ? '<ul>' + nomes.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') + (e.ob ? '<p>' + esc(e.ob) + '</p>' : '');
+}
+
+/* acende a esteira aberta e apaga as outras, como na prateleira das garras */
+function markEst(rolar){
+  var l = $('eList'), id = eSel ? eSel.id : '';
+  l.classList.toggle('dim', !!id);
+  var alvo = null;
+  Array.prototype.forEach.call(l.querySelectorAll('.ec'), function(c){ var on = c.dataset.e === id; c.classList.toggle('on', on); if (on && !alvo) alvo = c; });
+  document.body.style.paddingBottom = '';
+  if (rolar && alvo){
+    /* deixa a esteira escolhida no meio da parte que a folha não cobre */
+    requestAnimationFrame(function(){
+      var fh = $('esheet').querySelector('.in').offsetHeight, livre = window.innerHeight - fh;
+      document.body.style.paddingBottom = fh + 'px';
+      var r = alvo.getBoundingClientRect(), alvoY = Math.max(16, (livre - r.height) / 2);
+      window.scrollBy({ top: r.top - alvoY, behavior: 'smooth' });
+    });
+  }
+}
+
+function openEst(e, quieto){
+  if (!quieto){ closeSheets(); }
+  eSel = e;
+  markEst(!quieto);
+  $('eNum').textContent = 'Esteira ' + e.n;
+  $('eDesc').textContent = e.st === 'r' ? 'Não usar até consertar' : e.st ? 'Usar com atenção' : e.q ? 'Em uso na máquina ' + e.q : 'Guardada, pronta para usar';
+  $('eTile').className = 'etile' + (e.st ? ' ' + e.st : e.q ? ' b' : ' g'); $('eTile').innerHTML = eico('esteira');
+  var sc = $('eStat'), age = Date.now() - (e.sa || 0);
+  if (e.st){
+    sc.hidden = false; sc.className = 'stc ' + e.st + (!quieto && age >= 0 && age < 900 ? ' pop' : '');
+    sc.innerHTML = estStatusHtml(e) + '<small>Reportado por <b>' + esc(e.sb || 'Sem nome') + '</b> · ' + when(e.sa) + '</small>' +
+      '<div class="acts"><button type="button" id="eFix" class="ok">Consertada</button><button type="button" id="eRepE">Editar aviso</button></div>';
+  } else { sc.hidden = true; sc.innerHTML = ''; }
+  $('eWhere').innerHTML = '<span class="eti ' + (e.q ? 'b' : 'g') + '">' + eico(e.q ? 'garra' : 'caixa') + '</span><span class="erx"><small>Onde está</small><b>' + esc(e.q ? 'Máquina ' + e.q : 'Guardada') + '</b></span><i>' + (e.q ? 'Mudar' : 'Colocar') + ' ›</i>';
+  $('eQuick').hidden = !!e.st;
+  $('eQPick').innerHTML = Object.keys(EPR).map(function(k){ return '<button type="button" data-k="' + k + '">' + eico(k) + EPR[k] + '</button>'; }).join('');
+  var lb = $('eLast'); lb.hidden = !e.at;
+  if (e.at) lb.innerHTML = '<span class="eti g">' + eico('relogio') + '</span><span class="erx"><small>Última alteração</small><b>' + esc(e.by || 'Sem nome') + ' · ' + when(e.at) + '</b></span><i>Histórico ›</i>';
+  $('eActs').hidden = !LIDER;
+  if (!quieto){ $('esheet').classList.add('open'); $('esheet').setAttribute('aria-hidden', 'false'); }
+}
+
+$('eStat').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if (!b || !eSel) return;
+  if (b.id === 'eFix') openEFix(eSel); else if (b.id === 'eRepE') openERep(eSel);
+});
+$('eQPick').addEventListener('click', function(e){ var b = e.target.closest('[data-k]'); if (b && eSel) openERep(eSel, b.dataset.k); });
+$('eWhere').addEventListener('click', function(){ if (eSel) openEMaq(eSel); });
+$('eLast').addEventListener('click', function(){ if (eSel) openHist({ id: eSel.id, nome: 'Esteira ' + eSel.n }); });
+$('eDel').addEventListener('click', function(){
+  var e = eSel; if (!e || !LIDER) return;
+  ask('Remover a esteira ' + e.n + '?', 'Remover', function(){
+    estApaga(e); logE('del', e); closeSheets(); toast('Esteira ' + e.n + ' removida');
+  }, 'Use só se a esteira não existe mais no setor.');
+});
+
+/* ---- reportar problema ---- */
+var erFor = null, erSel = {}, erBase = 0, erSevSet = false;
+
+function setESev(v){
+  $('erSev').dataset.v = v;
+  Array.prototype.forEach.call($('erSev').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'); });
+  swapText($('erSevHelp'), v === 'r' ? 'Não use até ser consertada.' : 'Dá para usar, mas precisa de reparo logo.');
+}
+
+function openERep(e, pre){
+  closeSheets(); erFor = e; erBase = e.sa || 0; erSel = {}; erSevSet = !!e.st;
+  (e.pr || []).forEach(function(k){ erSel[k] = 1; });
+  if (pre) erSel[pre] = 1;
+  if (pre === 'nl' && !e.st){ erSevSet = false; }
+  $('erNum').textContent = 'Esteira ' + e.n; $('erDesc').textContent = e.q ? 'Na máquina ' + e.q : 'Guardada';
+  $('erTile').className = 'etile' + (e.st ? ' ' + e.st : ' w'); $('erTile').innerHTML = eico('esteira');
+  $('erPick').innerHTML = pickHtml(EPR, erSel);
+  $('erOther').classList.toggle('open', !!erSel.o);
+  $('erOb').value = e.ob || '';
+  clearErr($('erErr'), $('erPick')); clearErr($('erErr2'), $('erObG'));
+  $('erSevHelp').textContent = '';
+  /* esteira que não liga não tem como usar: já sugere "Não usar" */
+  setESev(e.st || (erSel.nl ? 'r' : 'w'));
+  openModal('erep');
+  if (pre === 'o') $('erOb').focus();
+}
+
+$('erPick').addEventListener('click', function(e){
+  var b = e.target.closest('[data-k]'); if (!b) return;
+  var k = b.dataset.k, on = !erSel[k];
+  if (on) erSel[k] = 1; else delete erSel[k];
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  clearErr($('erErr'), $('erPick'));
+  if (k === 'nl' && on && !erSevSet) setESev('r');
+  if (k === 'o'){ $('erOther').classList.toggle('open', on); clearErr($('erErr2'), $('erObG')); if (on) $('erOb').focus(); }
+});
+$('erSev').addEventListener('click', function(e){ var b = e.target.closest('[data-v]'); if (b){ erSevSet = true; setESev(b.dataset.v); } });
+$('erOb').addEventListener('input', function(){ clearErr($('erErr2'), $('erObG')); });
+$('erCancel').addEventListener('click', function(){ closeModal('erep'); });
+
+$('erf').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  if (!erFor || !$('erep').classList.contains('open')) return;
+  var e = estById(erFor.id);
+  if (!e){ erFor = null; closeModal('erep'); toast('Esta esteira foi removida em outro celular.'); return; }
+  if ((e.sa || 0) !== erBase){ erFor = null; closeModal('erep'); toast('Outro celular mudou o aviso desta esteira agora. Confira e tente de novo.'); setTimeout(function(){ openEst(e); }, 250); return; }
+  var keys = Object.keys(EPR).filter(function(k){ return erSel[k]; }), ob = $('erOb').value.trim().replace(/\s+/g, ' ');
+  if (!keys.length){ fail($('erErr'), $('erPick'), 'Marque o que aconteceu.'); $('erep').scrollTop = 0; return; }
+  if (erSel.o && !ob){ fail($('erErr2'), $('erObG'), 'Escreva qual é o problema.'); $('erOb').focus(); return; }
+  if (!erSel.o) ob = '';
+  var sev = $('erSev').dataset.v, agora = Date.now(), quem = NAME || 'Sem nome', base = erBase;
+  erFor = null; closeModal('erep');
+  estGrava(e, { st: sev, pr: keys, ob: ob.slice(0, LIM.ob), sb: quem, sa: agora, by: quem, at: agora }, base, function(){
+    logE('rep', e, (sev === 'r' ? 'Não usar' : 'Com atenção') + ' · ' + estNomes(e).join(', ').toLowerCase() + (ob ? ' · ' + ob : ''));
+  });
+  setTimeout(function(){ var x = estById(e.id); if (x) openEst(x); }, 200);
+  toast('Aviso salvo. O próximo turno vai ver.');
+});
+
+/* ---- conserto, com as peças e quantidades ---- */
+var exFor = null, exQt = {}, exBase = 0;
+
+function qtyHtml(){
+  return Object.keys(EPC).map(function(k){
+    var v = exQt[k] || 0;
+    return '<div class="qrow' + (v ? ' on' : '') + '" data-k="' + k + '"><span class="eti g">' + eico(k) + '</span><span class="qn">' + EPC[k][0] + '</span>' +
+      '<button type="button" class="qb" data-d="-1" aria-label="Menos ' + EPC[k][0].toLowerCase() + '"' + (v ? '' : ' disabled') + '>−</button>' +
+      '<output aria-live="polite">' + v + '</output>' +
+      '<button type="button" class="qb" data-d="1" aria-label="Mais ' + EPC[k][0].toLowerCase() + '">+</button></div>';
+  }).join('');
+}
+
+function openEFix(e){
+  closeSheets(); exFor = e; exBase = e.sa || 0; exQt = {};
+  $('exNum').textContent = 'Esteira ' + e.n; $('exDesc').textContent = e.q ? 'Na máquina ' + e.q : 'Guardada';
+  $('exTile').className = 'etile ok'; $('exTile').innerHTML = eico('chave');
+  $('exStat').className = 'stc ' + e.st; $('exStat').innerHTML = estStatusHtml(e);
+  $('exQty').innerHTML = qtyHtml(); $('exOther').classList.remove('open'); $('exOb').value = '';
+  clearErr($('exErr'), $('exOG'));
+  openModal('efix');
+}
+
+$('exQty').addEventListener('click', function(ev){
+  var b = ev.target.closest('[data-d]'); if (!b) return;
+  var row = b.closest('[data-k]'), k = row.dataset.k, v = Math.max(0, Math.min(99, (exQt[k] || 0) + +b.dataset.d));
+  exQt[k] = v;
+  row.querySelector('output').textContent = v;
+  row.classList.toggle('on', v > 0);
+  row.querySelector('[data-d="-1"]').disabled = !v;
+  if (k === 'ou'){ $('exOther').classList.toggle('open', v > 0); if (v > 0 && +b.dataset.d > 0 && v === 1) $('exOb').focus(); }
+});
+$('exOb').addEventListener('input', function(){ clearErr($('exErr'), $('exOG')); });
+$('exCancel').addEventListener('click', function(){ closeModal('efix'); });
+
+$('exf').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  if (!exFor || !$('efix').classList.contains('open')) return;
+  var e = estById(exFor.id);
+  if (!e){ exFor = null; closeModal('efix'); toast('Esta esteira foi removida em outro celular.'); return; }
+  if ((e.sa || 0) !== exBase){ exFor = null; closeModal('efix'); toast('Outro celular mudou o aviso desta esteira agora. Confira e tente de novo.'); setTimeout(function(){ openEst(e); }, 250); return; }
+  var outra = $('exOb').value.trim().replace(/\s+/g, ' ');
+  if (exQt.ou > 0 && !outra){ fail($('exErr'), $('exOG'), 'Escreva qual peça.'); $('exOb').focus(); return; }
+  var pecas = pecasTexto(exQt, outra), antes = estNomes(e).join(', ').toLowerCase() || (e.ob || ''), agora = Date.now(), quem = NAME || 'Sem nome', base = exBase;
+  exFor = null; closeModal('efix');
+  estGrava(e, { st: '', pr: [], ob: '', sb: '', sa: agora, by: quem, at: agora }, base, function(){
+    logE('fix', e, (antes ? antes : 'conserto') + (pecas ? ' · peças: ' + pecas : ' · sem troca de peças'));
+  });
+  setTimeout(function(){ var x = estById(e.id); if (x) openEst(x); }, 200);
+  toast('Esteira ' + e.n + ' consertada');
+});
+
+/* ---- em qual máquina está ---- */
+var emFor = null;
+function openEMaq(e){
+  closeSheets(); emFor = e;
+  $('emTitle').textContent = 'Esteira ' + e.n; $('emQ').value = e.q || '';
+  $('emOff').hidden = !e.q;
+  clearErr($('emErr'), $('emg'));
+  openModal('emaq'); $('emQ').focus();
+}
+function salvaMaq(q){
+  var e = emFor && estById(emFor.id); if (!e){ closeModal('emaq'); return; }
+  var agora = Date.now();
+  emFor = null; closeModal('emaq');
+  if (q === e.q){ openEst(e); return; }
+  estGrava(e, { q: q, by: NAME || 'Sem nome', at: agora });
+  setTimeout(function(){ var x = estById(e.id); if (x) openEst(x); }, 200);
+  toast(q ? 'Esteira ' + e.n + ' na máquina ' + q : 'Esteira ' + e.n + ' guardada');
+}
+$('emf').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var q = $('emQ').value.trim().replace(/^m[aá]q\.?\s*/i, '').replace(/\s+/g, ' ').slice(0, 20);
+  if (!q){ fail($('emErr'), $('emg'), 'Digite o número da máquina, ou toque em "Tirar da máquina".'); return; }
+  salvaMaq(q);
+});
+$('emOff').addEventListener('click', function(){ salvaMaq(''); });
+$('emQ').addEventListener('input', function(){ clearErr($('emErr'), $('emg')); });
+$('emCancel').addEventListener('click', function(){ var e = emFor; emFor = null; closeModal('emaq'); if (e) openEst(e); });
+
+/* ---- nova esteira (Líder) ---- */
+$('eAdd').addEventListener('click', function(){
+  if (!LIDER) return;
+  closeSheets(); $('enN').value = ''; clearErr($('enErr'), $('eng')); openModal('enew'); $('enN').focus();
+});
+$('enN').addEventListener('input', function(){ $('enN').value = $('enN').value.replace(/\D/g, ''); clearErr($('enErr'), $('eng')); });
+$('enCancel').addEventListener('click', function(){ closeModal('enew'); });
+$('enf').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  if (!LIDER) return;
+  var n = parseInt($('enN').value, 10);
+  if (!(n > 0 && n < 1000)){ fail($('enErr'), $('eng'), 'Digite o número da esteira.'); return; }
+  if (estById('e' + n)){ fail($('enErr'), $('eng'), 'A esteira ' + n + ' já está cadastrada.'); return; }
+  var e = cleanEst({ n: n, by: NAME, at: Date.now() }, 'e' + n);
+  closeModal('enew'); estCria([e]); logE('add', e);
+  toast('Esteira ' + n + ' cadastrada');
+  setTimeout(function(){ var x = estById(e.id); if (x) openEst(x); }, 250);
+});
+
+/* ---- próximas trocas: molde + máquina + hora → onde está a garra ---- */
+function trocasVivas(){ var t = Date.now(); return TR.filter(function(x){ return trocaViva(x, t); }).sort(ordemTrocas); }
+
+function linhaGarra(t){
+  var g = garrasDoMolde(t.n)[0];
+  return { g: g || null, w: g ? where(g) + (g.s ? ' · ' + g.p + 'ª' : '') : 'sem garra' };
+}
+
+function updateTrocas(){
+  var agora = Date.now(), vivas = trocasVivas(), b = $('nextBtn');
+  /* o que já passou da janela sai da lista de todos (uma vez por celular) */
+  if (!CLOUD || ready) TR.forEach(function(x){ if (x.n && !trocaViva(x, agora)) delTroca(x.id); });
+  var cnt = $('tCount'); cnt.hidden = !vivas.length; cnt.textContent = vivas.length;
+  if (!vivas.length || (CLOUD && !ready)) b.hidden = true;
+  else {
+    var t = vivas[0], l = linhaGarra(t), qd = quandoTroca(t, agora);
+    var txt = 'Próxima troca' + (t.h ? ' · ' + qd.hora : '') + ' · Máq. ' + t.q;
+    var sub = 'Molde ' + t.n + ' → ' + (l.g ? l.w : 'sem garra cadastrada') + (l.g && l.g.st === 'r' ? ' · não usar' : l.g && l.g.st ? ' · com atenção' : '') + (vivas.length > 1 ? ' · +' + (vivas.length - 1) : '');
+    if (b.hidden){ b.hidden = false; b.classList.remove('in'); void b.offsetWidth; b.classList.add('in'); }
+    $('nextTxt').textContent = txt; $('nextSub').textContent = sub;
+  }
+  if ($('trocas').classList.contains('open')) drawTrocas();
+}
+
+function drawTrocas(){
+  var agora = Date.now(), vivas = trocasVivas();
+  if (trErro){ $('tList').innerHTML = '<p class="hempty">' + esc(trErro) + '</p>'; return; }
+  if (!vivas.length){ $('tList').innerHTML = '<p class="hempty">Nenhuma troca na lista.<br>Preencha o molde e a máquina acima.</p>'; return; }
+  $('tList').innerHTML = '<h5>Na lista · ' + vivas.length + '</h5><div class="hday">' + vivas.map(function(t){
+    var l = linhaGarra(t), q = quandoTroca(t, agora), g = l.g;
+    return '<div class="trow"><button type="button" class="tgo"' + (g ? ' data-g="' + g.i + '"' : ' disabled') + '>' +
+      '<time' + (q.atraso ? ' class="late"' : '') + '><b>' + esc(q.hora) + '</b><small>' + esc(q.rel) + '</small></time>' +
+      '<span><span class="q">Máq. ' + esc(t.q) + ' · Molde ' + t.n + '</span>' +
+      (g ? '<span class="d">' + esc(g.d.toLowerCase()) + '</span><span class="loc">' + esc(where(g) + (g.s ? ' · ' + g.p + 'ª posição' : '')) + '</span>' : '<span class="d nog">Sem garra cadastrada para esse molde</span>') +
+      (g && g.st ? '<span class="x' + (g.st === 'r' ? ' r' : '') + '"><i class="mini' + (g.st === 'r' ? ' r' : '') + '" aria-hidden="true">!</i>' + esc(g.st === 'r' ? 'Não usar' : 'Com atenção') + '</span>' : '') + '</span></button>' +
+      '<button type="button" class="tok" data-t="' + esc(t.id) + '" aria-label="Troca da máquina ' + esc(t.q) + ' feita">Feita</button></div>';
+  }).join('') + '</div>';
+}
+
+/* enquanto digita o molde, já mostra onde está a garra */
+function previewTroca(){
+  var n = parseInt($('tN').value, 10), p = $('tPrev');
+  if (!(n > 0)){ p.innerHTML = ''; return; }
+  var g = garrasDoMolde(n);
+  if (!g.length){ p.innerHTML = 'Nenhuma garra cadastrada com o molde ' + n + '.'; return; }
+  p.innerHTML = g.map(function(m){
+    return (m.st ? '<i class="mini' + (m.st === 'r' ? ' r' : '') + '" aria-hidden="true">!</i>' : '') + 'Garra <b>' + esc(label(m)) + '</b> · ' + esc(m.d.toLowerCase()) + ' → <b>' + esc(where(m) + (m.s ? ' · ' + m.p + 'ª posição' : '')) + '</b>' +
+      (m.st ? ' <span class="bad">' + esc(stTitle(m)) + '</span>' : '');
+  }).join('<br>');
+}
+
+function openTrocas(){
+  closeSheets(); clearErr($('tErr'), $('tg')); drawTrocas(); previewTroca(); openModal('trocas');
+}
+
+$('tBtn').addEventListener('click', function(e){ e.preventDefault(); $('q').blur(); openTrocas(); });
+$('nextBtn').addEventListener('click', openTrocas);
+$('tClose').addEventListener('click', function(){ closeModal('trocas'); });
+$('tN').addEventListener('input', function(){ $('tN').value = $('tN').value.replace(/\D/g, ''); clearErr($('tErr'), $('tg')); previewTroca(); });
+$('tQ').addEventListener('input', function(){ clearErr($('tErr'), $('tg')); });
+$('tN').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); $('tQ').focus(); } });
+$('tQ').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); $('tH').focus(); } });
+
+$('tf').addEventListener('submit', function(e){
+  e.preventDefault();
+  var n = parseInt($('tN').value, 10), q = $('tQ').value.trim().replace(/\s+/g, ' ').slice(0, 20), agora = Date.now();
+  if (!(n > 0 && n < 1e6)){ fail($('tErr'), $('tg'), 'Digite o número do molde.'); $('tN').focus(); return; }
+  if (!q){ fail($('tErr'), $('tg'), 'Digite o número da máquina.'); $('tQ').focus(); return; }
+  var h = horaTroca($('tH').value, agora);
+  var igual = trocasVivas().some(function(t){ return t.n === n && t.q === q && t.h === h; });
+  if (igual){ fail($('tErr'), $('tg'), 'Essa troca já está na lista.'); return; }
+  addTroca(cleanTroca({ n: n, q: q, h: h, by: NAME || '', c: agora }, 't' + agora.toString(36) + Math.random().toString(36).slice(2, 6)));
+  $('tN').value = ''; $('tQ').value = ''; $('tH').value = ''; previewTroca();
+  if (document.activeElement) document.activeElement.blur();
+  toast('Troca adicionada');
+});
+
+$('tList').addEventListener('click', function(e){
+  var ok = e.target.closest('[data-t]');
+  if (ok){ delTroca(ok.dataset.t); toast('Troca marcada como feita'); return; }
+  var b = e.target.closest('[data-g]'); if (!b) return;
+  closeModal('trocas'); open(D[+b.dataset.g]);
+});
+
+/* horários relativos ("em 44 min") e a saída das trocas vencidas */
+setInterval(function(){ if (!document.hidden) updateTrocas(); }, 30000);
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) updateTrocas(); });
 
 $('aClose').addEventListener('click', function(){ closeModal('alerts'); });
 
@@ -1662,6 +2552,7 @@ $('sStat').addEventListener('click', function(e){
 });
 
 /* histórico: quem fez o quê e quando */
+var VERBE = { rep: 'reportou problema na', fix: 'marcou como consertada a', add: 'cadastrou a', addn: 'cadastrou as', del: 'removeu a' };
 var VERB = { rep: 'reportou problema na garra', fix: 'marcou como consertada a garra', take: 'marcou peça faltando na garra', add: 'adicionou a garra', edit: 'alterou a garra', del: 'removeu a garra', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
 
 function hue(q){ var h = 0; for (var i = 0; i < q.length; i++) h = (h * 31 + q.charCodeAt(i)) % 360; return h; }
@@ -1675,15 +2566,15 @@ function drawHist(list){
     var dn = dayName(e.t);
     if (dn !== day){ html += (day ? '</div>' : '') + '<h5>' + dn + '</h5><div class="hday">'; day = dn; }
     var sub = [e.d ? e.d.toLowerCase() : '', e.x].filter(Boolean).join(' · ');
-    html += '<div class="hrow"><span class="av" style="background:hsl(' + hue(e.q) + ' 55% 45%)" aria-hidden="true">' + esc(e.q.charAt(0).toUpperCase()) + '</span><div><p><b>' + esc(e.q) + '</b> ' + (VERB[e.a] || 'alterou') + ' <b>' + esc(e.m.toLowerCase ? (/^Prateleira|^Lista/.test(e.m) ? e.m.toLowerCase() : e.m) : e.m) + '</b></p>' + (sub ? '<p class="x">' + esc(sub) + '</p>' : '') + '<time>' + hm(new Date(e.t)) + '</time></div></div>';
+    html += '<div class="hrow"><span class="av" style="background:hsl(' + hue(e.q) + ' 55% 45%)" aria-hidden="true">' + esc(e.q.charAt(0).toUpperCase()) + '</span><div><p><b>' + esc(e.q) + '</b> ' + ((/^e/.test(e.id) ? VERBE[e.a] : VERB[e.a]) || 'alterou') + ' <b>' + esc(/^Prateleira|^Lista|^Esteira/.test(e.m) ? e.m.toLowerCase() : e.m) + '</b></p>' + (sub ? '<p class="x">' + esc(sub) + '</p>' : '') + '<time>' + hm(new Date(e.t)) + '</time></div></div>';
   });
-  $('hList').innerHTML = list.length ? html + '</div>' : '<p class="hempty">' + (hFilter ? 'Nenhuma alteração registrada para esta garra.' : 'Nada registrado ainda.<br>As alterações feitas a partir de agora aparecem aqui, com o nome de quem fez.') + '</p>';
+  $('hList').innerHTML = list.length ? html + '</div>' : '<p class="hempty">' + (hFilter ? 'Nenhuma alteração registrada para ' + (/^e/.test(hFilter.id) ? 'esta esteira.' : 'esta garra.') : 'Nada registrado ainda.<br>As alterações feitas a partir de agora aparecem aqui, com o nome de quem fez.') + '</p>';
 }
 
 function loadHist(){
   if (hUnsub){ hUnsub(); hUnsub = null; }
   var fb = $('hFil'); fb.hidden = !hFilter;
-  if (hFilter) fb.textContent = 'Garra ' + hFilter.label + '  ×';
+  if (hFilter) fb.textContent = (hFilter.nome || 'Garra ' + hFilter.label) + '  ×';
   if (!CLOUD){
     var h = []; try { h = (JSON.parse(localStorage.getItem(HKEY)) || []).map(cleanHist); } catch (e) {}
     drawHist(hFilter ? h.filter(function(e){ return e.id === hFilter.id; }) : h); return;
@@ -1694,7 +2585,7 @@ function loadHist(){
 }
 
 function openHist(m){
-  closeSheets(); hFilter = m ? { id: m.id, label: label(m) } : null;
+  closeSheets(); hFilter = m ? (m.nome ? m : { id: m.id, label: label(m) }) : null;
   $('hist').classList.add('open'); $('hist').setAttribute('aria-hidden', 'false'); $('hist').scrollTop = 0;
   loadHist();
 }
@@ -1766,7 +2657,7 @@ function hideLogin(){
 
 function applyRole(){
   document.body.classList.toggle('aux', !!ME && !LIDER);
-  renderShelves(); renderBoard(); foot();
+  renderShelves(); renderBoard(); foot(); refreshEst();
 }
 
 function entrarLocal(p){ entrar(p); applyRole(); hideLogin(); toast(LIDER ? 'Entrou como Líder' : 'Olá, ' + NAME); }
@@ -1811,6 +2702,7 @@ window.addEventListener('online', updateSub); window.addEventListener('offline',
 
 document.body.classList.toggle('aux', !!ME && !LIDER);
 renderShelves(); renderBoard(); foot();
+setTab(TAB, false); refreshEst();
 if (!ME) showLogin(false);
 
 requestAnimationFrame(function(){ requestAnimationFrame(function(){ board.classList.remove('still'); }); });
