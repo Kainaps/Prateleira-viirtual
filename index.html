@@ -531,6 +531,43 @@ body:not(.te) #eAdd{display:none}
 .tempty small{font-size:14px}
 @media (prefers-reduced-motion:reduce){.tcard,.tcard.flash,.tok.done .tck path{transition:none;animation:none}}
 
+/* ---- dificuldade da troca (v24): medidor de 1 a 3 barras, cor neutra ---- */
+.bars{display:inline-flex;align-items:flex-end;gap:2px;height:13px;margin-right:6px;vertical-align:-1px}
+.bars b{display:block;width:4px;border-radius:1.5px;background:currentColor;opacity:.22}
+.bars b:nth-child(1){height:5px}.bars b:nth-child(2){height:9px}.bars b:nth-child(3){height:13px}
+.bars.lv1 b:nth-child(-n+1),.bars.lv2 b:nth-child(-n+2),.bars.lv3 b{opacity:1}
+.copts .lv1 .bars b:nth-child(-n+1),.copts .lv2 .bars b:nth-child(-n+2),.copts .lv3 .bars b{opacity:1}
+.dpill{position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;padding:5px 10px 5px 9px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink);font-size:13px;font-weight:700;letter-spacing:.01em}
+.dpill.m{background:var(--ink);color:var(--bg)}
+/* linha na folha da garra */
+.dif{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:12px;padding:12px 14px;border:0;border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:transform 90ms ease-out}
+.dif:active{transform:scale(.985)}
+.dif .dl{display:grid;gap:2px}
+.dif .dl>small{font-size:13px;color:var(--mute);font-weight:500}
+.dif .dl>b{display:flex;align-items:center;font-size:17px;font-weight:600}
+.dif .dl>b.none{color:var(--mute);font-weight:500}
+.dif .dn{margin-top:0}
+.dif>i{font-style:normal;font-size:15px;font-weight:600;color:var(--accent);white-space:nowrap}
+/* folha "Como foi a troca?" — acima das telas cheias, para aparecer logo depois de "Concluída" */
+.csheet{z-index:25}
+.csheet .in{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.csheet h3{margin:6px 0 2px;font-size:22px;font-weight:700;letter-spacing:-.01em;text-align:center}
+.csub{margin:0 0 16px;text-align:center;color:var(--mute);font-size:15px;text-transform:none}
+.copts{display:grid;gap:10px}
+.copts button{display:flex;align-items:center;gap:14px;min-height:66px;padding:0 18px;border:0;border-radius:16px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer;box-shadow:0 0 0 1px var(--line) inset;transition:transform 90ms ease-out,background-color .2s ease-out,box-shadow .2s ease-out}
+.copts button:active{transform:scale(.98)}
+.copts .bars{height:22px;gap:3px;margin:0}
+.copts .bars b{width:6px;border-radius:2px}
+.copts .bars b:nth-child(1){height:8px}.copts .bars b:nth-child(2){height:15px}.copts .bars b:nth-child(3){height:22px}
+.copts span{display:grid}
+.copts span b{font-size:18px;font-weight:700}
+.copts span small{font-size:14px;color:var(--mute)}
+.copts button.on{background:var(--accent);color:#fff;box-shadow:none}
+.copts button.on small{color:rgba(255,255,255,.85)}
+.copts button:disabled:not(.on){opacity:.4}
+.cskip{display:block;width:100%;height:48px;margin-top:8px;border:0;background:none;color:var(--accent);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.dif,.copts button{transition:none}}
+
 </style>
 </head>
 <body>
@@ -621,6 +658,7 @@ body:not(.te) #eAdd{display:none}
     </div>
     <div class="stc" id="sStat" hidden></div>
     <div class="chips" id="sChips"></div>
+    <button type="button" class="dif" id="sDif"></button>
     <button type="button" class="last" id="sLast" hidden></button>
     <div class="quick" id="sQuick"><span>Algum problema?</span><div class="pick q" id="sQPick"></div></div>
     <div class="acts"><button type="button" id="sEdit">Editar</button><button type="button" id="sDel" class="danger">Remover</button></div>
@@ -784,6 +822,20 @@ body:not(.te) #eAdd{display:none}
   </div>
 </div>
 
+<div class="sheet csheet" id="cls" aria-hidden="true">
+  <div class="in" role="dialog" aria-labelledby="clT">
+    <div class="grab"></div>
+    <h3 id="clT">Como foi a troca?</h3>
+    <p class="csub" id="clS"></p>
+    <div class="copts" id="clO">
+      <button type="button" data-c="f" class="lv1"><i class="bars" aria-hidden="true"><b></b><b></b><b></b></i><span><b>Fácil</b><small>Sem complicação</small></span></button>
+      <button type="button" data-c="d" class="lv2"><i class="bars" aria-hidden="true"><b></b><b></b><b></b></i><span><b>Difícil</b><small>Precisou de ajustes</small></span></button>
+      <button type="button" data-c="m" class="lv3"><i class="bars" aria-hidden="true"><b></b><b></b><b></b></i><span><b>Muito difícil</b><small>Deu bastante trabalho</small></span></button>
+    </div>
+    <button type="button" class="cskip" id="clSkip">Pular</button>
+  </div>
+</div>
+
 <div class="modal" id="trocas" aria-hidden="true">
   <div class="hl">
     <div class="bar"><button type="button" id="tClose">Fechar</button><strong>Próximas trocas</strong><span></span></div>
@@ -840,6 +892,21 @@ function cStr(v, max){ return typeof v === 'string' ? v.slice(0, max) : ''; }
 
 function cInt(v, lo, hi){ v = Math.round(+v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo; }
 
+/* ---- dificuldade da troca ----
+   Cada avaliação soma 1 em f (fácil), d (difícil) ou m (muito difícil).
+   A garra mostra a que mais se repete; no empate, a mais difícil (por segurança). */
+var DIF = { f: 'Fácil', d: 'Difícil', m: 'Muito difícil' };
+function cleanCl(c){
+  c = c && typeof c === 'object' ? c : {};
+  return { f: cInt(c.f, 0, 100000), d: cInt(c.d, 0, 100000), m: cInt(c.m, 0, 100000) };
+}
+function dificuldade(m){
+  var c = m && m.cl || {}, f = c.f || 0, d = c.d || 0, mm = c.m || 0, total = f + d + mm;
+  if (!total) return null;
+  var k = mm >= d && mm >= f ? 'm' : d >= f ? 'd' : 'f';
+  return { k: k, nome: DIF[k], total: total };
+}
+
 function clean(x, id){
   x = x && typeof x === 'object' ? x : {};
   var n = Array.isArray(x.n) ? x.n.map(Number).filter(function(v){ return v > 0 && v < 1e6 && Math.floor(v) === v; }).slice(0, 3) : [];
@@ -850,7 +917,7 @@ function clean(x, id){
   var pr = Array.isArray(x.pr) ? x.pr.filter(function(k){ return typeof k === 'string' && 'v f o m c p s'.split(' ').indexOf(k) !== -1; }).slice(0, 8) : [];
   return { id: String(id || x.id || '').replace(/[^\w-]/g, '').slice(0, 40), n: n, d: cStr(x.d, LIM.d), s: sh, a: a, p: sh ? p : 0, t: x.t === 'a' ? 'a' : 'w',
     by: cStr(x.by, LIM.who), at: cInt(x.at, 0, 9e15), st: x.st === 'w' || x.st === 'r' ? x.st : '', pr: pr,
-    ob: cStr(x.ob, LIM.ob), sb: cStr(x.sb, LIM.who), sa: cInt(x.sa, 0, 9e15) };
+    ob: cStr(x.ob, LIM.ob), sb: cStr(x.sb, LIM.who), sa: cInt(x.sa, 0, 9e15), cl: cleanCl(x.cl) };
 }
 
 function cleanShelves(l){
@@ -1112,6 +1179,19 @@ function editTroca(t){
     toast(er && er.code === 'permission-denied' ? 'Sem permissão para editar trocas.' : 'Não foi possível salvar a alteração.');
   });
 }
+/* avaliação da troca: soma 1 direto no servidor (não passa pelo push, para não contar duas vezes) */
+function avaliarGarra(m, k){
+  if (!m || !DIF[k]) return;
+  m.cl = cleanCl(m.cl); m.cl[k] += 1;
+  if (!CLOUD){ save(); return; }
+  if (!db) return;
+  var inc = {}; inc[k] = firebase.firestore.FieldValue.increment(1);
+  db.collection('mascaras').doc(m.id).set({ cl: inc }, { merge: true }).catch(function(er){
+    m.cl[k] -= 1;
+    toast(er && er.code === 'permission-denied' ? 'Sem permissão para avaliar.' : 'Não foi possível salvar a avaliação.');
+    if (typeof renderBoard === 'function'){ renderBoard(); updateTrocas(); }
+  });
+}
 function delTroca(id){
   if (!CLOUD){ TR = TR.filter(function(t){ return t.id !== id; }); salvarTrocasLocais(); updateTrocas(); return; }
   if (!db || trApagando[id]) return;
@@ -1193,7 +1273,7 @@ function listen(){
       list.push(m); rem[m.id] = fields(m);
     });
     list.sort(function(x, y){ return (x.n[0] || 99999) - (y.n[0] || 99999) || (x.id < y.id ? -1 : 1); });
-    var sg = list.map(function(m){ return m.id + JSON.stringify(rem[m.id]); }).join('|') + '#' + fromCache;
+    var sg = list.map(function(m){ return m.id + JSON.stringify(rem[m.id]) + JSON.stringify(m.cl); }).join('|') + '#' + fromCache;
     var first = !got.m; got.m = true; setReady();
     if (sg === lastSig && !first){ updateSub(); return; }
     lastSig = sg;
@@ -1201,7 +1281,9 @@ function listen(){
     D = list; remote = rem; index(); applyShelves();
     D.forEach(function(m){ by[m.id] = m; });
     if (edId){ if (by[edId]) editing = by[edId]; else closeForm(); }
-    if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } }
+    if (selId){ selected = by[selId] || null; if (!selected){ $('sheet').classList.remove('open'); $('sheet').setAttribute('aria-hidden', 'true'); } else difRow(selected); }
+    /* a folha de avaliação aponta para a garra nova (mesmo id) */
+    if (clFor && by[clFor.id]) clFor = by[clFor.id];
     renderShelves(); renderBoard(); search(); foot();
   }, cloudErr));
   unsub.push(db.collection('esteiras').onSnapshot(function(snap){
@@ -1531,6 +1613,7 @@ function show(s, quiet){
 function open(m){
   if (m.s !== current){ finishAnim(); current = m.s; renderShelves(); renderBoard(); }
   selected = m;
+  difRow(m);
   $('sNum').textContent = label(m);
   $('sNum').className = 'big' + (m.n.length ? '' : ' sn');
   $('sDesc').textContent = m.d.toLowerCase();
@@ -1984,6 +2067,47 @@ $('alertBtn').addEventListener('click', function(){ closeSheets(); drawAlerts();
 var EICO = {"prat": "<rect x=\"4\" y=\"3.5\" width=\"16\" height=\"17\" rx=\"1.6\"/><path d=\"M4 9.2h16M4 14.8h16\"/><rect x=\"6.6\" y=\"5.6\" width=\"3.4\" height=\"2.6\" rx=\".6\"/><rect x=\"11.4\" y=\"11.2\" width=\"3.4\" height=\"2.6\" rx=\".6\"/><rect x=\"7.8\" y=\"16.8\" width=\"3.4\" height=\"2.6\" rx=\".6\"/>", "garra": "<path d=\"M3.5 4h17\"/><rect class=\"fi\" x=\"8.5\" y=\"2.2\" width=\"7\" height=\"4.2\" rx=\"1.3\"/><path d=\"M12 6.4v4.4\"/><rect class=\"fi\" x=\"7.5\" y=\"10.8\" width=\"9\" height=\"2.6\" rx=\"1\"/><path d=\"M9 13.4v3.2c0 1.3.6 2.4 1.6 3.1\"/><path d=\"M15 13.4v3.2c0 1.3-.6 2.4-1.6 3.1\"/>", "esteira": "<rect class=\"fi\" x=\"9\" y=\"4.5\" width=\"6\" height=\"5\" rx=\"1.2\"/><rect class=\"fi\" x=\"2.5\" y=\"10.5\" width=\"19\" height=\"5.6\" rx=\"2.8\"/><circle class=\"hole\" cx=\"5.4\" cy=\"13.3\" r=\"1\"/><circle class=\"hole\" cx=\"18.6\" cy=\"13.3\" r=\"1\"/><path d=\"M6.5 16.1v4M17.5 16.1v4\"/>", "caixa": "<rect x=\"3.5\" y=\"4\" width=\"17\" height=\"4.5\" rx=\"1.2\"/><path d=\"M5 8.5v9.2c0 .7.6 1.3 1.3 1.3h11.4c.7 0 1.3-.6 1.3-1.3V8.5\"/><path d=\"M10 12.5h4\"/>", "chave": "<path d=\"M14.7 6.3a4.2 4.2 0 0 0-5.6 5.3L3.8 16.9a1.6 1.6 0 0 0 2.3 2.3l5.3-5.3a4.2 4.2 0 0 0 5.3-5.6l-2.6 2.6-2.2-.4-.4-2.2z\"/>", "relogio": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>", "ps": "<rect x=\"8\" y=\"3\" width=\"8\" height=\"3.4\" rx=\"1.2\"/><path d=\"M10 6.4v11l2 2.6 2-2.6v-11\"/><path d=\"M10 9.6l4 1.4M10 12.6l4 1.4M10 15.6l4 1.2\"/>", "nl": "<path d=\"M12 3.5v7.5\"/><path d=\"M7.2 6.6a7.5 7.5 0 1 0 9.6 0\"/>", "rs": "<path d=\"M8.5 3.5h7\"/><path d=\"M12 3.5v3.2\"/><path d=\"M9.2 6.7h5.6\"/><circle cx=\"12\" cy=\"14.5\" r=\"5.5\"/><circle cx=\"12\" cy=\"14.5\" r=\"1.6\"/>", "pf": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M10 4v3h4V4M20 10h-3v4h3M14 20v-3h-4v3M4 14h3v-4H4\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/>", "o": "<circle cx=\"6\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18\" cy=\"12\" r=\"1.3\"/>", "pa": "<rect x=\"8\" y=\"3\" width=\"8\" height=\"3.4\" rx=\"1.2\"/><path d=\"M10 6.4v11l2 2.6 2-2.6v-11\"/><path d=\"M10 9.6l4 1.4M10 12.6l4 1.4M10 15.6l4 1.2\"/>", "po": "<path d=\"M12 3.2l7.6 4.4v8.8L12 20.8l-7.6-4.4V7.6z\"/><circle cx=\"12\" cy=\"12\" r=\"3.2\"/>", "ca": "<path d=\"M5 4.5h4.2v10.3h10.3V19H6.2A1.2 1.2 0 0 1 5 17.8z\"/><circle cx=\"7.1\" cy=\"9\" r=\"1\"/><circle cx=\"14.5\" cy=\"16.9\" r=\"1\"/>", "ro": "<path d=\"M8.5 3.5h7\"/><path d=\"M12 3.5v3.2\"/><path d=\"M9.2 6.7h5.6\"/><circle cx=\"12\" cy=\"14.5\" r=\"5.5\"/><circle cx=\"12\" cy=\"14.5\" r=\"1.6\"/>", "pe": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M10 4v3h4V4M20 10h-3v4h3M14 20v-3h-4v3M4 14h3v-4H4\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/>", "lo": "<rect x=\"2.5\" y=\"8.5\" width=\"19\" height=\"7\" rx=\"3.5\"/><circle cx=\"6\" cy=\"12\" r=\"1.2\"/><circle cx=\"18\" cy=\"12\" r=\"1.2\"/><path d=\"M9.5 8.5h5\"/>", "ou": "<circle cx=\"6\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18\" cy=\"12\" r=\"1.3\"/>"};
 function eico(k, cls){ return '<svg class="' + (cls || 'eico') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (EICO[k] || '') + '</svg>'; }
 
+/* ===================== DIFICULDADE DA TROCA ===================== */
+/* medidor de 1 a 3 barras, como o sinal do celular. Cor neutra: verde/laranja/vermelho já são defeito na garra */
+function barras(k){ return '<i class="bars ' + (k === 'f' ? 'lv1' : k === 'd' ? 'lv2' : 'lv3') + '" aria-hidden="true"><b></b><b></b><b></b></i>'; }
+function difPill(m){ var d = dificuldade(m); return d ? '<span class="dpill ' + d.k + '">' + barras(d.k) + d.nome + '</span>' : ''; }
+
+var clFor = null, clDepois = null;
+function abrirAvaliacao(m, depois){
+  if (!m) return;
+  clFor = m; clDepois = depois || null;
+  $('clT').textContent = 'Como foi a troca?';
+  $('clS').textContent = 'Garra ' + label(m) + ' · ' + m.d.toLowerCase();
+  Array.prototype.forEach.call($('clO').children, function(b){ b.classList.remove('on'); b.disabled = false; });
+  var c = $('cls'); c.classList.add('open'); c.setAttribute('aria-hidden', 'false');
+}
+function fecharAvaliacao(){
+  var c = $('cls'); c.classList.remove('open'); c.setAttribute('aria-hidden', 'true');
+  var f = clDepois; clFor = null; clDepois = null; if (f) f();
+}
+$('clO').addEventListener('click', function(e){
+  var b = e.target.closest('[data-c]'); if (!b || !clFor) return;
+  var m = clFor, k = b.dataset.c;
+  Array.prototype.forEach.call($('clO').children, function(x){ x.disabled = true; });
+  b.classList.add('on');
+  avaliarGarra(m, k);
+  log('cls', m, DIF[k].toLowerCase());
+  setTimeout(function(){
+    fecharAvaliacao();
+    toast('Garra ' + label(m) + ': ' + DIF[k].toLowerCase());
+    if (selected && selected.id === m.id && $('sheet').classList.contains('open')) difRow(selected);
+    updateTrocas();
+  }, 380);
+});
+$('clSkip').addEventListener('click', fecharAvaliacao);
+
+/* linha na garra: mostra a dificuldade e permite avaliar sem ter passado pela troca */
+function difRow(m){
+  var d = dificuldade(m), b = $('sDif');
+  b.innerHTML = '<span class="dl"><small>Dificuldade da troca</small>' + (d ? '<b>' + barras(d.k) + d.nome + '</b><small class="dn">' + d.total + (d.total === 1 ? ' avaliação' : ' avaliações') + '</small>' : '<b class="none">Ainda não avaliada</b>') + '</span><i>Classificar ›</i>';
+}
+$('sDif').addEventListener('click', function(){ if (selected) abrirAvaliacao(selected); });
+
 /* ===================== ESTEIRAS ===================== */
 /* abas: Garras e Esteiras. A aba escolhida fica lembrada neste celular */
 var TAB = 'g';
@@ -2379,6 +2503,7 @@ function trocaCard(t, agora){
   var pos = g ? (g.s ? 'Prateleira ' + g.s + ' · Andar ' + g.a + ' · ' + g.p + 'ª' : 'Sem lugar na prateleira') : '';
   return '<div class="tcard' + (q.atraso ? ' late' : '') + (prox ? ' next' : '') + (t.id === trEditId ? ' editing' : '') + '" data-tc="' + esc(t.id) + '">' +
     '<button type="button" class="tgo"' + (g ? ' data-g="' + g.i + '" aria-label="Ver a garra do molde ' + t.n + ' na prateleira"' : ' disabled') + '>' +
+      (g && dificuldade(g) ? difPill(g) : '') +
       (t.h ? '<span class="tt"><time>' + esc(q.hora) + '</time><span class="trel">' + esc(q.atraso ? 'atrasada · ' + q.rel : q.rel) + '</span></span>' : '') +
       '<span class="tq">Máquina ' + esc(t.q) + '</span>' +
       '<span class="tm">Molde ' + t.n + (g ? ' · <span class="tn">' + esc(g.d.toLowerCase()) + '</span>' : '') + '</span>' +
@@ -2482,7 +2607,11 @@ function concluirTroca(b){
     card.style.height = card.offsetHeight + 'px'; void card.offsetHeight;
     card.classList.add('fecha'); card.style.height = '0px';
   }, reduz ? 0 : 420);
-  setTimeout(function(){ delTroca(id); delete trSaindo[id]; updateTrocas(); }, reduz ? 10 : 760);
+  var t = TR.filter(function(x){ return x.id === id; })[0], g = t ? linhaGarra(t).g : null;
+  setTimeout(function(){
+    delTroca(id); delete trSaindo[id]; updateTrocas();
+    if (g) abrirAvaliacao(g);
+  }, reduz ? 10 : 760);
   toast('Troca concluída');
 }
 
@@ -2662,7 +2791,7 @@ $('sStat').addEventListener('click', function(e){
 
 /* histórico: quem fez o quê e quando */
 var VERBE = { rep: 'reportou problema na', fix: 'marcou como consertada a', add: 'cadastrou a', addn: 'cadastrou as', del: 'removeu a' };
-var VERB = { rep: 'reportou problema na garra', fix: 'marcou como consertada a garra', take: 'marcou peça faltando na garra', add: 'adicionou a garra', edit: 'alterou a garra', del: 'removeu a garra', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
+var VERB = { cls: 'avaliou a troca da garra', rep: 'reportou problema na garra', fix: 'marcou como consertada a garra', take: 'marcou peça faltando na garra', add: 'adicionou a garra', edit: 'alterou a garra', del: 'removeu a garra', sp: 'criou a', sm: 'removeu a', imp: 'importou a' };
 
 function hue(q){ var h = 0; for (var i = 0; i < q.length; i++) h = (h * 31 + q.charCodeAt(i)) % 360; return h; }
 
